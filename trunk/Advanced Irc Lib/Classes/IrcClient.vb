@@ -246,4 +246,12 @@ Public Class IrcClient
         SendData(Data)
         Return Data
     End Function
+    Public Function WhoIs(ByVal Nick As String)
+        If isConnected = False Then
+            Return Nothing
+        End If
+
+        SendData("WHOIS " & Nick)
+        Return Nothing
+    End Function
 End Class
