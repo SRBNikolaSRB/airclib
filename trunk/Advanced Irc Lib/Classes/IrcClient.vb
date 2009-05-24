@@ -142,7 +142,7 @@ Public Class IrcClient
             SendData("NICK " & Nick)
             Me.Nick = Nick
         Catch e As Exception
-            End
+            Return
         End Try
     End Sub
     
