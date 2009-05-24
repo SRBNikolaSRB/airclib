@@ -1,4 +1,9 @@
-﻿Imports System
+﻿' IrcClient.vb
+' Advanced IRC Library Project
+' See LICENSE file for Copyrights
+' Website "http://code.google.com/p/airclib/"
+
+Imports System
 Imports System.Net
 Imports System.Net.Sockets
 Imports System.IO
