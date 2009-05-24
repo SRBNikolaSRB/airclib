@@ -7,8 +7,11 @@ Imports System
 Imports System.Net
 Imports System.Net.Sockets
 Imports System.IO
+Imports Advanced_Irc_Lib.Locals
 
 Public Class IrcClient
+    Inherits Locals
+
     Public WithEvents irc As New TcpClient
     Public Stream As System.Net.Sockets.NetworkStream
 
@@ -20,17 +23,6 @@ Public Class IrcClient
     Public isConnected As Boolean
     Public isInChannel As Boolean
     Public Nick As String
-
-    Public Structure IrcServer
-        Public Server As String
-        Public Port As Integer
-    End Structure
-    Public Structure ChannelMessageData
-        Public Server As String
-        Public Command As String
-        Public Channel As String
-        Public Message As String
-    End Structure
 
     '''<summary>  
     '''Connection event, connects to server IP/Address and port. 2 Overloads.
@@ -145,9 +137,9 @@ Public Class IrcClient
             Return
         End Try
     End Sub
-    
 
-    Public Function ReadChannelData(ByVal Data As String) As ChannelMessageData
+
+    Public Function ReadChannelData(ByVal Data As String) As IrcClient.ChannelMessageData
         If isInChannel = False Then
             Return Nothing
         End If
@@ -173,7 +165,20 @@ Public Class IrcClient
         End If
 
         Dim msg As ChannelMessageData = ReadChannelData(Data)
+
+        If (msg.Command <> "PRIVMSG") Then
+            Return Data
+        End If
+
         Return msg.Message
     End Function
 
+    '''<summary>  
+    '''Sends message to wanted channel, connection must be part of channel.
+    '''</summary>
+    Public Function SendMessageToChannel(ByVal Channel As String, ByVal Message As String)
+        SendData("PRIVMSG " + Channel + " :" + Message)
+        Return Nothing
+    End Function
 End Class
+
