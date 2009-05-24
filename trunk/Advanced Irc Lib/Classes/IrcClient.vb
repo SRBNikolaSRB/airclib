@@ -242,7 +242,7 @@ Public Class IrcClient
             Return Nothing
         End If
 
-        Dim Data As String = String.Format("TOPIC #{0} {1}", Channel, Topic)
+        Dim Data As String = String.Format("TOPIC #{0} :{1}", Channel, Topic)
         SendData(Data)
         Return Data
     End Function
