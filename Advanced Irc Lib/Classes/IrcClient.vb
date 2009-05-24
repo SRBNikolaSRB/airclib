@@ -1,9 +1,4 @@
-﻿' IrcClient.vb
-' Advanced IRC Library Project
-' See LICENSE file for Copyrights
-' Website "http://code.google.com/p/airclib/"
-
-Imports System
+﻿Imports System
 Imports System.Net
 Imports System.Net.Sockets
 Imports System.IO
@@ -16,6 +11,7 @@ Public Class IrcClient
     Public Event OnReciveData(ByVal Data As String)
     Public Event OnConnect()
 
+    'Class vars
     Public isConnected As Boolean
     Public isInChannel As Boolean
 
@@ -30,6 +26,9 @@ Public Class IrcClient
         Public Message As String
     End Structure
 
+    '<summary>  
+    'Connection event, connects to server IP/Address and port. 2 Overloads.
+    '</summary>
     Public Overloads Sub Connect(ByVal Server As String, ByVal Port As Integer)
         Try
             irc.Connect(Server, Port)
@@ -51,6 +50,9 @@ Public Class IrcClient
         End Try
     End Sub
 
+    '<summary>  
+    'Return isConnected, boolean.
+    '</summary>
     Public Function Connected() As Boolean
         If isConnected = True Then
             Return True
@@ -59,6 +61,9 @@ Public Class IrcClient
         End If
     End Function
 
+    '<summary>  
+    'Sends data to currently connected irc server.
+    '</summary>
     Public Sub SendData(ByVal Data As String)
         Dim Writer As New StreamWriter(Stream)
         Writer.WriteLine(Data, Stream)
@@ -80,12 +85,24 @@ Public Class IrcClient
             RaiseEvent OnReciveData(Data)
             Listen()
         End While
+
+        If (InStr(Data, "PING")) Then
+            SendData(Replace(Data, "PING", "PONG"))
+        End If
+
         Reader.Dispose()
         Data = Nothing
         Listen()
     End Sub
     Public Sub Disconnect()
         irc.Close()
+    End Sub
+    Public Sub JoinChannel(ByVal Channel As String)
+        SendData("JOIN #" & Channel)
+        isInChannel = True
+    End Sub
+    Public Sub SetNick(ByVal Nick As String)
+        SendData("NICK " & Nick)
     End Sub
 
     Public Function ReadChannelData(ByVal Data As String) As ChannelMessageData
