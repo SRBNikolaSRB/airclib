@@ -205,6 +205,9 @@ Public Class IrcClient
         Return msg.Message
     End Function
 
+    '''<summary>  
+    '''Sends message to channel.
+    '''</summary>
     Public Function SendMessageToChannel(ByVal Channel As String, ByVal Message As String)
         If isConnected = False Or ChannelCount = 0 Then
             Return Nothing
@@ -213,6 +216,9 @@ Public Class IrcClient
         SendData("PRIVMSG " + Channel + " :" + Message)
         Return Nothing
     End Function
+    '''<summary>  
+    '''Sends message to user.
+    '''</summary>
     Public Function SendMessageToUser(ByVal User As String, ByVal Message As String)
         If isConnected = False Then
             Return Nothing
@@ -221,6 +227,9 @@ Public Class IrcClient
         SendData("PRIVMSG " + User + " :" + Message)
         Return Nothing
     End Function
+    '''<summary>  
+    '''Gets topic from channel.
+    '''</summary>
     Public Function GetTopic(ByVal Channel As String) As String
         If isConnected = False Or ChannelCount = 0 Then
             Return Nothing
@@ -229,6 +238,9 @@ Public Class IrcClient
         SendData("TOPIC " & "#" & Channel)
         Return Nothing
     End Function
+    '''<summary>  
+    '''Get names from channel.
+    '''</summary>
     Public Function GetNames(ByVal Channel As String) As String
         If isConnected = False Or ChannelCount = 0 Then
             Return Nothing
@@ -237,6 +249,9 @@ Public Class IrcClient
         SendData("NAMES #" & Channel)
         Return Nothing
     End Function
+    '''<summary>  
+    '''Changes current topic in channel.
+    '''</summary>
     Public Function SetTopic(ByVal Channel As String, ByVal Topic As String)
         If isConnected = False Or ChannelCount = 0 Then
             Return Nothing
@@ -246,6 +261,9 @@ Public Class IrcClient
         SendData(Data)
         Return Data
     End Function
+    '''<summary>  
+    '''Does action/emote in channel.
+    '''</summary>
     Public Function DoAction(ByVal Channel As String, ByVal Action As String)
         If isConnected = False Or ChannelCount = 0 Then
             Return Nothing
@@ -254,6 +272,9 @@ Public Class IrcClient
         SendData("PRIVMSG #" & Channel & " :ACTION " & Action & "")
         Return Nothing
     End Function
+    '''<summary>  
+    '''Checks who is "target".
+    '''</summary>
     Public Function WhoIs(ByVal Nick As String)
         If isConnected = False Then
             Return Nothing
@@ -262,6 +283,9 @@ Public Class IrcClient
         SendData("WHOIS " & Nick)
         Return Nothing
     End Function
+    '''<summary>  
+    '''Make notice to user.
+    '''</summary>
     Public Function Notice(ByVal Target As String, ByVal Message As String)
         If isConnected = False Then
             Return Nothing
@@ -270,4 +294,11 @@ Public Class IrcClient
         SendData("NOTICE " & Target & " :" & Message)
         Return Nothing
     End Function
+
+    '''<summary>  
+    '''Request server's MOTD, Message of the day.
+    '''</summary>
+    Public Sub GetMOTD(ByVal Server As String)
+        SendData("MOTD")
+    End Sub
 End Class
