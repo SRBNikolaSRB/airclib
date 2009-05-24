@@ -16,13 +16,14 @@ Public Class IrcClient
     Public Stream As System.Net.Sockets.NetworkStream
 
     'Events
-    Public Event OnReciveData(ByVal Data As String)
     Public Event OnConnect()
+    Public Event OnDataSent(ByVal Data As String)
+    Public Event OnReciveData(ByVal Data As String)
 
     'Class vars
-    Public isConnected As Boolean
-    Public isInChannel As Boolean
-    Public Nick As String
+    Private isConnected As Boolean
+    Private Nick As String
+    Private ChannelCount As Integer
 
     '''<summary>  
     '''Connection event, connects to server IP/Address and port. 2 Overloads.
@@ -62,7 +63,7 @@ Public Class IrcClient
     '''Check's if client is in channel.
     '''</summary>
     Public Function InChannel() As Boolean
-        If (isConnected = False Or isInChannel = False) Then
+        If (isConnected = False Or ChannelCount = 0) Then
             Return False
         Else
             Return True
@@ -84,9 +85,14 @@ Public Class IrcClient
     '''Sends data to currently connected irc server.
     '''</summary>
     Public Sub SendData(ByVal Data As String)
-        Dim Writer As New StreamWriter(Stream)
-        Writer.WriteLine(Data, Stream)
-        Writer.Flush()
+        Try
+            Dim Writer As New StreamWriter(Stream)
+            Writer.WriteLine(Data, Stream)
+            Writer.Flush()
+            RaiseEvent OnDataSent(Data)
+        Catch e As Exception
+            Return
+        End Try
     End Sub
 
     '''<summary>  
@@ -99,7 +105,11 @@ Public Class IrcClient
     '''<summary>  
     '''Current connection reads all incoming data, if not null it will start OnReciveData event.
     '''</summary>
-    Public Sub Listen()
+    Public Sub Listen(ByVal Listen As Boolean)
+        If Listen = False Then
+            Return
+        End If
+
         If isConnected = False Then
             Return
         End If
@@ -108,7 +118,7 @@ Public Class IrcClient
         Dim Data As String = Reader.ReadLine()
         While (isConnected = True And Data <> "")
             RaiseEvent OnReciveData(Data)
-            Listen()
+            Me.Listen(True)
         End While
 
         If (InStr(Data, "PING")) Then
@@ -117,15 +127,32 @@ Public Class IrcClient
 
         Reader.Dispose()
         Data = Nothing
-        Listen()
+        Me.Listen(True)
     End Sub
+    '''<summary> 
+    '''Fast, unsafe disconnect.
+    '''</summary>
     Public Sub Disconnect()
+        irc.Close()
+    End Sub
+    '''<summary> 
+    '''Quits from server, Reason needed. 
+    '''</summary>
+    Public Sub Quit(ByVal Reason As String)
+        SendData("QUIT #" & Reason)
         irc.Close()
     End Sub
     Public Sub JoinChannel(ByVal Channel As String)
         SendData("JOIN #" & Channel)
-        isInChannel = True
+        ChannelCount += 1
+        GetTopic(Channel)
+        GetNames(Channel)
     End Sub
+    Public Sub LeaveChannel(ByVal Channel As String, ByVal Reason As String)
+        SendData("PART #" & Channel)
+        ChannelCount -= 1
+    End Sub
+
     '''<summary>  
     '''Sets current connection Nick Name
     '''</summary>
@@ -138,9 +165,11 @@ Public Class IrcClient
         End Try
     End Sub
 
-
+    '''<summary>  
+    '''Reads data in channel format.
+    '''</summary>
     Public Function ReadChannelData(ByVal Data As String) As IrcClient.ChannelMessageData
-        If isInChannel = False Then
+        If ChannelCount = 0 Then
             Return Nothing
         End If
 
@@ -159,8 +188,11 @@ Public Class IrcClient
         End Try
 
     End Function
-    Public Function ReadMessage(ByVal Data As String) As String
-        If isInChannel = False Then
+    '''<summary>  
+    '''Reads message from channel data.
+    '''</summary>
+    Public Function ReadMessageFromChannel(ByVal Data As String) As String
+        If ChannelCount = 0 Then
             Return Nothing
         End If
 
@@ -173,20 +205,14 @@ Public Class IrcClient
         Return msg.Message
     End Function
 
-    '''<summary>  
-    '''Sends message to wanted channel, connection must be part of channel.
-    '''</summary>
     Public Function SendMessageToChannel(ByVal Channel As String, ByVal Message As String)
-        If isConnected = False Or isInChannel = False Then
+        If isConnected = False Or ChannelCount = 0 Then
             Return Nothing
         End If
 
         SendData("PRIVMSG " + Channel + " :" + Message)
         Return Nothing
     End Function
-    '''<summary>  
-    '''Sends message to wanted user, client must be connected to server.
-    '''</summary>
     Public Function SendMessageToUser(ByVal User As String, ByVal Message As String)
         If isConnected = False Then
             Return Nothing
@@ -195,5 +221,29 @@ Public Class IrcClient
         SendData("PRIVMSG " + User + " :" + Message)
         Return Nothing
     End Function
-End Class
+    Public Function GetTopic(ByVal Channel As String) As String
+        If isConnected = False Or ChannelCount = 0 Then
+            Return Nothing
+        End If
 
+        SendData("TOPIC " & "#" & Channel)
+        Return Nothing
+    End Function
+    Public Function GetNames(ByVal Channel As String) As String
+        If isConnected = False Or ChannelCount = 0 Then
+            Return Nothing
+        End If
+
+        SendData("NAMES #" & Channel)
+        Return Nothing
+    End Function
+    Public Function SetTopic(ByVal Channel As String, ByVal Topic As String)
+        If isConnected = False Or ChannelCount = 0 Then
+            Return Nothing
+        End If
+
+        Dim Data As String = String.Format("TOPIC #{0} {1}", Channel, Topic)
+        SendData(Data)
+        Return Data
+    End Function
+End Class
