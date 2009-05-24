@@ -246,6 +246,14 @@ Public Class IrcClient
         SendData(Data)
         Return Data
     End Function
+    Public Function DoAction(ByVal Channel As String, ByVal Action As String)
+        If isConnected = False Or ChannelCount = 0 Then
+            Return Nothing
+        End If
+
+        SendData("PRIVMSG #" & Channel & " :ACTION " & Action & "")
+        Return Nothing
+    End Function
     Public Function WhoIs(ByVal Nick As String)
         If isConnected = False Then
             Return Nothing
@@ -254,12 +262,12 @@ Public Class IrcClient
         SendData("WHOIS " & Nick)
         Return Nothing
     End Function
-    Public Function DoAction(ByVal Channel As String, ByVal Action As String)
-        If isConnected = False Or ChannelCount = 0 Then
+    Public Function Notice(ByVal Target As String, ByVal Message As String)
+        If isConnected = False Then
             Return Nothing
         End If
 
-        SendData("PRIVMSG #" & Channel & " :ACTION " & Action & "")
+        SendData("NOTICE " & Target & " :" & Message)
         Return Nothing
     End Function
 End Class
