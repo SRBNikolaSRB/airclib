@@ -177,7 +177,22 @@ Public Class IrcClient
     '''Sends message to wanted channel, connection must be part of channel.
     '''</summary>
     Public Function SendMessageToChannel(ByVal Channel As String, ByVal Message As String)
+        If isConnected = False Or isInChannel = False Then
+            Return Nothing
+        End If
+
         SendData("PRIVMSG " + Channel + " :" + Message)
+        Return Nothing
+    End Function
+    '''<summary>  
+    '''Sends message to wanted user, client must be connected to server.
+    '''</summary>
+    Public Function SendMessageToUser(ByVal User As String, ByVal Message As String)
+        If isConnected = False Then
+            Return Nothing
+        End If
+
+        SendData("PRIVMSG " + User + " :" + Message)
         Return Nothing
     End Function
 End Class
