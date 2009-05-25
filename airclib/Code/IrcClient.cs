@@ -235,7 +235,13 @@ namespace airc
             if (!isConnected || ChannelCount == 0)
                 return;
 
-            string Data = String.Format("TOPIC #{0} :{1}", Channel, Topic);
+            string sharp = "";
+
+            if (!Channel.Contains("#"))
+                sharp = "#";
+
+
+            string Data = String.Format("TOPIC {0}{1} :{2}", sharp, Channel, Topic);
             SendData(Data);
         }
         /// <summary>
@@ -340,6 +346,23 @@ namespace airc
                 sharp = "#";
 
             string Data = String.Format("PRIVMSG {0}{1} :{2}", sharp, Channel, Message);
+            SendData(Data);
+        }
+        /// <summary>
+        /// Invites user with wanted nickname to wanted channel.
+        /// </summary>
+        /// <param name="Nickname">Users nickname.</param>
+        /// <param name="Channel">Wanted channel.</param>
+        public void InviteToChannel(string Nickname, string Channel)
+        {
+            if (!isConnected)
+                return;
+
+            string sharp = "";
+            if (!Channel.Contains("#"))
+                sharp = "#";
+
+            string Data = String.Format("INVITE {0} {1}{2}", Nickname, sharp, Channel);
             SendData(Data);
         }
     }
