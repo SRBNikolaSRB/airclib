@@ -1,13 +1,18 @@
-﻿using System;
+﻿/* IrcClient.cs
+   Advanced IRC Library Project (airclib)
+   See LICENSE file for Copyrights
+   Website "http://code.google.com/p/airclib/" */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Net.Sockets;
 using System.Net;
 using System.IO;
-using airclib;
+using airc;
 
-namespace airclib
+namespace airc
 {
     class IrcClient : Locals
     {
@@ -42,7 +47,6 @@ namespace airclib
                 return;
             }
         }
-
         public void Connect(IrcServer Server)
         {
             try
@@ -58,7 +62,6 @@ namespace airclib
                 return;
             }
         }
-
         public void SendData(string Data)
         {
             try
@@ -74,7 +77,6 @@ namespace airclib
                 return;
             }
         }
-
         public void Listen(bool bListen)
         {
             if (!bListen || !isConnected || Stream == null)
@@ -102,7 +104,6 @@ namespace airclib
             else
                 return false;
         }
-
         public bool IsInChannel()
         {
             if (ChannelCount != 0)
@@ -110,13 +111,148 @@ namespace airclib
             else
                 return false;
         }
-
+        public string GetNick()
+        {
+            return Nick;
+        }
         public NetworkStream GetStream()
         {
             if (Stream != null)
                 return Stream;
             else
                 return null;
+        }
+
+        public void Disconnect()
+        {
+            irc.Close();
+        }
+        public void Quit(string Reason)
+        {
+            SendData("QUIT #" + Reason);
+            irc.Close();
+        }
+        public void JoinChannel(string Channel)
+        {
+            if (!isConnected || ChannelCount == 0)
+                return;
+
+            if (Channel.Contains("#"))
+                SendData("JOIN " + Channel);
+            else
+                SendData("JOIN #" + Channel);
+
+            ChannelCount++;
+            GetTopic(Channel);
+        }
+        public void LeaveChannel(string Channel)
+        {
+            if (!isConnected || ChannelCount == 0)
+                return;
+
+            string sharp = "";
+            if (!Channel.Contains("#"))
+                sharp = "#";
+
+            SendData("PART " + sharp + Channel);
+            ChannelCount--;
+        }
+        public void GetTopic(string Channel)
+        {
+            if (!isConnected || ChannelCount == 0)
+                return;
+
+            if (Channel.Contains("#"))
+                SendData("TOPIC " + Channel);
+            else
+                SendData("TOPIC #" + Channel);
+        }
+        public void GetNames(string Channel)
+        {
+            if (!isConnected || ChannelCount == 0)
+                return;
+
+            if (Channel.Contains("#"))
+                SendData("NAMES " + Channel);
+            else
+                SendData("NAMES #" + Channel);
+        }
+        public void SetTopic(string Channel, string Topic)
+        {
+            if (!isConnected || ChannelCount == 0)
+                return;
+
+            string Data = String.Format("TOPIC #{0} :{1}", Channel, Topic);
+            SendData(Data);
+        }
+        public void MessageUser(string User, string Message)
+        {
+            if (!isConnected)
+                return;
+
+            string Data = String.Format("PRIVMSG {0} :{1}", User, Message);
+            SendData(Data);
+        }
+        public void DoAction(string Channel, string Action)
+        {
+            if (!isConnected || ChannelCount == 0)
+                return;
+
+            string sharp = "";
+            if (!Channel.Contains("#"))
+                sharp = "#";
+
+            string Data = String.Format("PRIVMSG {0}{1} :ACTION {2}", sharp, Channel, Action);
+            SendData(Data);
+        }
+        public void SetNick(string Nick)
+        {
+            if (!isConnected)
+                return;
+
+            try
+            {
+                SendData("NICK " + Nick);
+                this.Nick = Nick;
+            }
+            catch
+            {
+                return;
+            }
+        }
+        public void WhoIs(string Nick)
+        {
+            if (!isConnected)
+                return;
+
+            SendData("WHOIS " + Nick);
+        }
+        public void Notice(string User, string Message)
+        {
+            if (!isConnected || ChannelCount == 0)
+                return;
+
+            string Data = String.Format("NOTICE {0} :{1}", User, Message);
+            SendData(Data);
+        }
+        public void ServerMOTD()
+        {
+            if (!isConnected)
+                return;
+
+            SendData("MOTD");
+        }
+        public void MessageChannel(string Channel, string Message)
+        {
+            if (!isConnected || ChannelCount == 0)
+                return;
+
+            string sharp = "";
+            if (!Channel.Contains("#"))
+                sharp = "#";
+
+            string Data = String.Format("PRIVMSG {0}{1} :{2}", sharp, Channel, Message);
+            SendData(Data);
         }
     }
 }

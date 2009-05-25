@@ -1,4 +1,9 @@
-﻿using System;
+﻿/* Locals.cs
+   Advanced IRC Library Project (airclib)
+   See LICENSE file for Copyrights
+   Website "http://code.google.com/p/airclib/" */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
