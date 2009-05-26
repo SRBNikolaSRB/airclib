@@ -103,6 +103,9 @@ namespace airc
                     OnReciveData(Data);
 
                 Listen(bListen);
+                if(Data.Contains("PING"))
+                    SendData(Data.Replace("PING", "PONG"));
+
                 return;
             }
 
