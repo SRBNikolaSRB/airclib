@@ -7,9 +7,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using airclib;
+using airc;
 
-namespace airclib
+namespace airc
 {
     public abstract class Locals
     {
@@ -18,12 +18,28 @@ namespace airclib
             public string Server;
             public int Port;
         }
-        public struct ChannelMessageData
+        public struct PrivmsgData
         {
-            public string Server;
+            public string Sender;
             public string Command;
-            public string Channel;
+            public string Target;
             public string Message;
+            public PrivmsgType Type;
+            public string WholeData;
+        }
+        public struct ActionData
+        {
+            public string Sender;
+            public string Target;
+            public string Action;
+        }
+
+        public enum PrivmsgType : int
+        {
+            MSGTYPE_USER = 0,
+            MSGTYPE_CHANNEL = 1,
+            MSGTYPE_DEFAULT = 2
         }
     }
 }
+

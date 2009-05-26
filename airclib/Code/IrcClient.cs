@@ -95,22 +95,94 @@ namespace airc
             if (!bListen || !isConnected || Stream == null)
                 return;
 
-            StreamReader Reader = new StreamReader(Stream);
-            string Data = Reader.ReadLine();
-            while (isConnected == true && Data != "")
+            try
             {
-                if (OnReciveData != null)
-                    OnReciveData(Data);
+                StreamReader Reader = new StreamReader(irc.GetStream());
+                for (int i = 0; i < 10; i++)
+                {
+                    string Data = Reader.ReadLine();
+                    while (Data != "")
+                    {
+                        if (OnReciveData != null)
+                            OnReciveData(Data);
 
-                Listen(bListen);
-                if(Data.Contains("PING"))
-                    SendData(Data.Replace("PING", "PONG"));
+                        Data = "";
+                        Data = Reader.ReadLine();
 
-                return;
+                        if (i == 10)
+                        {
+                            Listen(bListen);
+                            return;
+                        }
+                    }
+                }
             }
+            catch
+            {
+                Listen(true);
+            }
+        }
+        /// <summary>
+        /// Reads channel or user private message. Returns PrivmsgData.
+        /// </summary>
+        /// <param name="Data">Data to get readed.</param>
+        /// <returns>PrivmsgData.</returns>
+        public PrivmsgData ReadPrivmsg(string Data)
+        {
+            PrivmsgData pmsg = new PrivmsgData();
 
-            Listen(bListen);
-            return;
+            if (!isConnected)
+                return pmsg;
+
+            if (!Data.Contains("PRIVMSG"))
+            {
+                pmsg.Type = PrivmsgType.MSGTYPE_DEFAULT;
+                pmsg.WholeData = Data;
+
+                return pmsg;
+            }
+            else
+            {
+                try
+                {
+                    if (ChannelCount == 0)
+                    {
+                        string[] sp = { " " };
+                        string[] sData = Data.Split(sp, 4, StringSplitOptions.None);
+
+                        pmsg.Sender = sData[0];
+                        pmsg.Command = sData[1];
+                        pmsg.Target = sData[2];
+                        pmsg.Message = sData[3];
+                        pmsg.Type = PrivmsgType.MSGTYPE_USER;
+                        pmsg.WholeData = Data;
+
+                        return pmsg;
+                    }
+                    else
+                    {
+                        string[] sp = { " " };
+                        string[] sData = Data.Split(sp, 4, StringSplitOptions.None);
+
+                        pmsg.Sender = sData[0];
+                        pmsg.Command = sData[1];
+                        pmsg.Target = sData[2];
+                        pmsg.Message = sData[3];
+                        pmsg.WholeData = Data;
+
+                        if (pmsg.Target.Contains("#")) // if it does, that is channel
+                            pmsg.Type = PrivmsgType.MSGTYPE_CHANNEL; // Than message is channel type
+                        else
+                            pmsg.Type = PrivmsgType.MSGTYPE_USER;
+
+                        return pmsg;
+                    }
+                }
+                catch
+                {
+                    return pmsg;
+                }
+            }
         }
 
         /// <summary>
