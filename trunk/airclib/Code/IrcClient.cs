@@ -31,6 +31,7 @@ namespace airclib
         public event OnReciveDataEventHandler OnReciveData;
         public delegate void OnReciveDataEventHandler(string Data);
 
+        #region "Connection"
         /// <summary>
         /// Connection event, connects to irc server.
         /// </summary>
@@ -124,6 +125,9 @@ namespace airclib
                 Listen(true);
             }
         }
+        #endregion
+
+        #region "Reading"
         /// <summary>
         /// Reads channel or user private message. Returns PrivmsgData.
         /// </summary>
@@ -138,7 +142,7 @@ namespace airclib
 
             if (!Data.Contains("PRIVMSG"))
             {
-                pmsg.Type = PrivmsgType.MSGTYPE_DEFAULT;
+                pmsg.Type = DataType.MSGTYPE_DEFAULT;
                 pmsg.WholeData = Data;
 
                 return pmsg;
@@ -156,7 +160,7 @@ namespace airclib
                         pmsg.Command = sData[1];
                         pmsg.Target = sData[2];
                         pmsg.Message = sData[3];
-                        pmsg.Type = PrivmsgType.MSGTYPE_USER;
+                        pmsg.Type = DataType.MSGTYPE_USER;
                         pmsg.WholeData = Data;
 
                         return pmsg;
@@ -173,9 +177,9 @@ namespace airclib
                         pmsg.WholeData = Data;
 
                         if (pmsg.Target.Contains("#")) // if it does, that is channel
-                            pmsg.Type = PrivmsgType.MSGTYPE_CHANNEL; // Than message is channel type
+                            pmsg.Type = DataType.MSGTYPE_CHANNEL; // Than message is channel type
                         else
-                            pmsg.Type = PrivmsgType.MSGTYPE_USER;
+                            pmsg.Type = DataType.MSGTYPE_USER;
 
                         return pmsg;
                     }
@@ -207,7 +211,98 @@ namespace airclib
                 return Sender;
             }
         }
+        /// <summary>
+        /// Reads data with server type.
+        /// </summary>
+        /// <param name="Message">Actual data.</param>
+        /// <returns>Returns server data structure.</returns>
+        public ServerData ReadServerData(string Message)
+        {
+            ServerData cd = new ServerData();
 
+            if (!isConnected)
+                return cd;
+
+            string[] sp = { " " };
+            string[] msg = Message.Split(sp, 4, StringSplitOptions.None);
+
+            cd.Sender = msg[0];
+            cd.Command = msg[1];
+            cd.Target = msg[2];
+            cd.Message = ReadOnlyMessage(msg[3]);
+
+            return cd;
+        }
+        /// <summary>
+        /// Removes ":" from wanted message.
+        /// </summary>
+        /// <param name="Message">Wanted message.</param>
+        /// <returns>String.</returns>
+        public string ReadOnlyMessage(string Message)
+        {
+            if (!isConnected)
+                return null;
+
+            try
+            {
+                string cData = Message.Replace(":", "");
+                return cData;
+            }
+            catch
+            {
+                return Message;
+            }
+        }
+        /// <summary>
+        /// Reads action, with normal formular, action sender and action it self. Data should be action type.
+        /// </summary>
+        /// <param name="Data">Data, reccomended action type.</param>
+        /// <returns>ActionData structure.</returns>
+        public ActionData GetAction(string Data)
+        {
+            ActionData ad = new ActionData();
+
+            if (GetDataType(Data) != DataType.MSGTYPE_ACTION && !isConnected)
+                return ad;
+
+            try
+            {
+                string[] st = { " " };
+                string[] dt = Data.Split(st, 4, StringSplitOptions.None);
+                string newData = dt[3].Replace(":ACTION ", "");
+                newData = newData.Replace("", "");
+                ad.Sender = ReadNick(dt[0]);
+                ad.Action = newData;
+                return ad;
+            }
+            catch
+            {
+                return ad;
+            }
+        }
+        /// <summary>
+        /// Reads irc data, returning its data type.
+        /// </summary>
+        /// <param name="Data"></param>
+        /// <returns></returns>
+        public DataType GetDataType(string Data)
+        {
+            if (!isConnected)
+                return DataType.NULL;
+
+            if (Data.Contains("PRIVMSG"))
+                if (Data.Contains("#") && ChannelCount != 0 && !Data.Contains("INV")) // must be a channel type
+                    return DataType.MSGTYPE_CHANNEL;
+                else if (Data.Contains("ACTION "))
+                    return DataType.MSGTYPE_ACTION;
+                else
+                    return DataType.MSGTYPE_USER;
+            else
+                return DataType.MSGTYPE_SERVER;
+        }
+        #endregion
+
+        #region "Connection States"
         /// <summary>
         /// Bool, returns isConnected.
         /// </summary>
@@ -245,7 +340,9 @@ namespace airclib
             else
                 return null;
         }
+        #endregion
 
+        #region "IRC Commands"
         /// <summary>
         /// Disconnects from server.
         /// </summary>
@@ -463,5 +560,6 @@ namespace airclib
             string Data = String.Format("INVITE {0} {1}{2}", Nickname, sharp, Channel);
             SendData(Data);
         }
+        #endregion
     }
 }
