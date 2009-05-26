@@ -106,6 +106,9 @@ namespace airc
                         if (OnReciveData != null)
                             OnReciveData(Data);
 
+                        if (Data.Contains("PING"))
+                            SendData(Data.Replace("PING", "PONG"));
+
                         Data = "";
                         Data = Reader.ReadLine();
 
