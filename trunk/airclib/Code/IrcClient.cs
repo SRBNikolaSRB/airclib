@@ -560,6 +560,21 @@ namespace airclib
             string Data = String.Format("INVITE {0} {1}{2}", Nickname, sharp, Channel);
             SendData(Data);
         }
+        /// <summary>
+        /// Sets away, and away message.
+        /// </summary>
+        /// <param name="Away">Boolean, true for being away.</param>
+        /// <param name="Message">Message, only works if Away is true.</param>
+        public void SetAway(bool Away, string Message)
+        {
+            if (!isConnected)
+                return;
+
+            if (!Away)
+                SendData("AWAY");
+            else
+                SendData("AWAY " + Message);
+        }
         #endregion
     }
 }
