@@ -6,9 +6,9 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using airc;
+using airclib;
 
-namespace airc
+namespace airclib.locals
 {
     public abstract class Locals
     {
