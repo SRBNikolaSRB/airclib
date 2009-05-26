@@ -9,11 +9,11 @@ using System.Text;
 using System.Net.Sockets;
 using System.Net;
 using System.IO;
-using airc;
+using airclib.locals;
 
-namespace airc
+namespace airclib
 {
-    class IrcClient : Locals
+    public class IrcClient : Locals
     {
         private TcpClient irc = new TcpClient();
         private NetworkStream Stream;
