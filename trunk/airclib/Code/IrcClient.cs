@@ -187,6 +187,27 @@ namespace airc
                 }
             }
         }
+        /// <summary>
+        /// Parses nickname of sender.
+        /// </summary>
+        /// <param name="Sender">Sender ID, i recommend using ReadPrivmsg's parsed sender.</param>
+        /// <returns>Nickname.</returns>
+        public string ReadNick(string Sender)
+        {
+            if (!isConnected)
+                return null;
+
+            try
+            {
+                string[] sp = { ":", "!" };
+                string[] sp1 = Sender.Split(sp, 2, StringSplitOptions.RemoveEmptyEntries);
+                return sp1[0];
+            }
+            catch
+            {
+                return Sender;
+            }
+        }
 
         /// <summary>
         /// Bool, returns isConnected.
