@@ -276,6 +276,7 @@ namespace airclib
                 string newData = dt[3].Replace(":ACTION ", "");
                 newData = newData.Replace("", "");
                 ad.Sender = ReadNick(dt[0]);
+                ad.Target = dt[2];
                 ad.Action = newData;
                 return ad;
             }
@@ -295,7 +296,7 @@ namespace airclib
                 return DataType.NULL;
 
             if (Data.Contains("PRIVMSG"))
-                if (Data.Contains("#") && ChannelCount != 0 && !Data.Contains("INV")) // must be a channel type
+                if (Data.Contains("#") && ChannelCount != 0 && !Data.Contains("INV") && !Data.Contains("ACTION ")) // must be a channel type
                     return DataType.MSGTYPE_CHANNEL;
                 else if (Data.Contains("ACTION "))
                     return DataType.MSGTYPE_ACTION;
