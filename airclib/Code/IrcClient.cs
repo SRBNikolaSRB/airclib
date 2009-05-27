@@ -31,7 +31,7 @@ namespace airclib
         public event OnReciveDataEventHandler OnReciveData;
         public delegate void OnReciveDataEventHandler(string Data);
         public event OnChannelJoinEventHandler OnChannelJoin;
-        public delegate void OnChannelJoinEventHandler();
+        public delegate void OnChannelJoinEventHandler(string Channel);
 
         #region "Connection"
         /// <summary>
@@ -375,7 +375,7 @@ namespace airclib
             SendData("JOIN " + Channel);
 
             if (OnChannelJoin != null)
-                OnChannelJoin();
+                OnChannelJoin(Channel);
 
             ChannelCount++;
         }
