@@ -24,14 +24,18 @@ namespace airclib
         private string Nick = "";
 
         //Events
-        public event OnConnectEventHandler OnConnect;
         public delegate void OnConnectEventHandler();
-        public event OnDataSentEventHandler OnDataSent;
         public delegate void OnDataSentEventHandler(string Data);
-        public event OnReciveDataEventHandler OnReciveData;
         public delegate void OnReciveDataEventHandler(string Data);
-        public event OnChannelJoinEventHandler OnChannelJoin;
         public delegate void OnChannelJoinEventHandler(string Channel);
+        public delegate void OnUserJoinedChannelEventHandler(string UserNick, string Channel);
+        public delegate void OnUserLeftChannelEventHandler(string UserNick, string Channel);
+        public event OnConnectEventHandler OnConnect;
+        public event OnDataSentEventHandler OnDataSent;
+        public event OnReciveDataEventHandler OnReciveData;
+        public event OnChannelJoinEventHandler OnChannelJoin;
+        public event OnUserJoinedChannelEventHandler OnUserJoinedChannel;
+        public event OnUserLeftChannelEventHandler OnUserLeftChannel;
 
         #region "Connection"
         /// <summary>
@@ -109,6 +113,19 @@ namespace airclib
                         {
                             SendData(Data.Replace("PING", "PONG"));
                             Data = "";
+                        }
+                        else if (Data.Contains(" JOIN #")) // hooks OnUserJoinedChannel(string UserNick, string Channel)
+                        {
+                            string[] dt = Data.Split(' ');
+
+                            if (OnUserJoinedChannel != null && ReadNick(dt[0]) != GetNick())
+                                OnUserJoinedChannel(ReadNick(dt[0]), dt[2]);
+                        }
+                        else if (Data.Contains(" PART #")) // hooks OnUserLeftChannel(string UserNick, string Channel)
+                        {
+                            string[] dt = Data.Split(' ');
+                            if (OnUserLeftChannel != null && ReadNick(dt[0]) != GetNick())
+                                OnUserLeftChannel(ReadNick(dt[0]), dt[2]);
                         }
 
                         if (OnReciveData != null && Data != null)
