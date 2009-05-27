@@ -379,6 +379,8 @@ namespace airclib
                 OnChannelJoin(Channel);
 
             ChannelCount++;
+            GetTopic(Channel);
+            GetNames(Channel);
         }
         /// <summary>
         /// Leaves channel.
