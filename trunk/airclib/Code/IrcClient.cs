@@ -103,15 +103,17 @@ namespace airclib
                     string Data = Reader.ReadLine();
                     while (Data != "")
                     {
-                        if (OnReciveData != null)
-                            OnReciveData(Data);
-
                         if (Data.Contains("PING"))
+                        {
                             SendData(Data.Replace("PING", "PONG"));
+                            Data = "";
+                        }
+
+                        if (OnReciveData != null && Data != null)
+                            OnReciveData(Data);
 
                         Data = "";
                         Data = Reader.ReadLine();
-
                         if (i == 10)
                         {
                             Listen(bListen);
@@ -356,7 +358,7 @@ namespace airclib
         /// <param name="Message">Leaving message.</param>
         public void Quit(string Message)
         {
-            SendData("QUIT #" + Message);
+            SendData("QUIT " + Message);
             irc.Close();
         }
         /// <summary>
@@ -365,16 +367,14 @@ namespace airclib
         /// <param name="Channel">Channel name.</param>
         public void JoinChannel(string Channel)
         {
-            if (!isConnected || ChannelCount == 0)
+            if (!isConnected)
                 return;
 
-            if (Channel.Contains("#"))
-                SendData("JOIN " + Channel);
-            else
-                SendData("JOIN #" + Channel);
+            SendData("JOIN " + Channel);
 
             ChannelCount++;
             GetTopic(Channel);
+            GetNames(Channel);
         }
         /// <summary>
         /// Leaves channel.
@@ -385,11 +385,7 @@ namespace airclib
             if (!isConnected || ChannelCount == 0)
                 return;
 
-            string sharp = "";
-            if (!Channel.Contains("#"))
-                sharp = "#";
-
-            SendData("PART " + sharp + Channel);
+            SendData("PART " + Channel);
             ChannelCount--;
         }
         /// <summary>
@@ -401,10 +397,7 @@ namespace airclib
             if (!isConnected || ChannelCount == 0)
                 return;
 
-            if (Channel.Contains("#"))
-                SendData("TOPIC " + Channel);
-            else
-                SendData("TOPIC #" + Channel);
+            SendData("TOPIC " + Channel);
         }
         /// <summary>
         /// Gets name list from channel.
@@ -415,10 +408,7 @@ namespace airclib
             if (!isConnected || ChannelCount == 0)
                 return;
 
-            if (Channel.Contains("#"))
-                SendData("NAMES " + Channel);
-            else
-                SendData("NAMES #" + Channel);
+            SendData("NAMES " + Channel);
         }
         /// <summary>
         /// Changes, sets topic to wanted channel.
@@ -430,13 +420,9 @@ namespace airclib
             if (!isConnected || ChannelCount == 0)
                 return;
 
-            string sharp = "";
-
-            if (!Channel.Contains("#"))
-                sharp = "#";
 
 
-            string Data = String.Format("TOPIC {0}{1} :{2}", sharp, Channel, Topic);
+            string Data = String.Format("TOPIC {0} :{1}", Channel, Topic);
             SendData(Data);
         }
         /// <summary>
@@ -444,12 +430,26 @@ namespace airclib
         /// </summary>
         /// <param name="Nick">Sends message to this Nick/User.</param>
         /// <param name="Message">Message.</param>
-        public void MessageUser(string Nick, string Message)
+        public void MessageUser(string tNick, string Message)
         {
             if (!isConnected)
                 return;
 
-            string Data = String.Format("PRIVMSG {0} :{1}", Nick, Message);
+            string Data = String.Format("PRIVMSG {0} :{1}", tNick, Message);
+            SendData(Data);
+        }
+        /// <summary>
+        /// Query, messages nick. With color.
+        /// </summary>
+        /// <param name="Nick">Sends message to this Nick/User.</param>
+        /// <param name="Message">Message.</param>
+        /// <param name="Color">Wanted message color.</param>
+        public void MessageUser(string tNick, string Message, ColorMessages Color)
+        {
+            if (!isConnected)
+                return;
+
+            string Data = String.Format("PRIVMSG {0} :\u0003{2} {1}", tNick, Message, (int)Color);
             SendData(Data);
         }
         /// <summary>
@@ -462,15 +462,9 @@ namespace airclib
         {
             if (!isConnected || ChannelCount == 0)
                 return;
-            
-            string sharp = "";
-            if (Channel)
-            {
-                if (!Target.Contains("#"))
-                    sharp = "#";
-            }
 
-            string Data = String.Format("PRIVMSG {0}{1} :ACTION {2}", sharp, Target, Action);
+
+            string Data = String.Format("PRIVMSG {0} :ACTION {1}", Target, Action);
             SendData(Data);
         }
         /// <summary>
@@ -536,11 +530,21 @@ namespace airclib
             if (!isConnected || ChannelCount == 0)
                 return;
 
-            string sharp = "";
-            if (!Channel.Contains("#"))
-                sharp = "#";
+            string Data = String.Format("PRIVMSG {0} :{1}", Channel, Message);
+            SendData(Data);
+        }
+        /// <summary>
+        /// Sends message to wanted channel, connection must be connected to channel. With color.
+        /// </summary>
+        /// <param name="Channel">Channel name, connection must be connected to this channel.</param>
+        /// <param name="Message">Message.</param>
+        /// <param name="Color">Wanted color.</param>
+        public void MessageChannel(string Channel, string Message, ColorMessages Color)
+        {
+            if (!isConnected || ChannelCount == 0)
+                return;
 
-            string Data = String.Format("PRIVMSG {0}{1} :{2}", sharp, Channel, Message);
+            string Data = String.Format("PRIVMSG {0} :\u0003{1} {2}", Channel, (int)Color, Message);
             SendData(Data);
         }
         /// <summary>
@@ -553,11 +557,7 @@ namespace airclib
             if (!isConnected)
                 return;
 
-            string sharp = "";
-            if (!Channel.Contains("#"))
-                sharp = "#";
-
-            string Data = String.Format("INVITE {0} {1}{2}", Nickname, sharp, Channel);
+            string Data = String.Format("INVITE {0} {1}", Nickname, Channel);
             SendData(Data);
         }
         /// <summary>
@@ -578,3 +578,4 @@ namespace airclib
         #endregion
     }
 }
+
