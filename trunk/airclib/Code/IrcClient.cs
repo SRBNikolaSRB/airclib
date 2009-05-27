@@ -1,7 +1,8 @@
 ﻿/* IrcClient.cs
-   Advanced IRC Library Project (airclib)
-   See LICENSE file for Copyrights
-   Website "http://code.google.com/p/airclib/" */
+ * Advanced IRC Library Project (airclib)
+ * See LICENSE file for Copyright
+ * Website "http://code.google.com/p/airclib/" 
+ */
 
 using System;
 using System.Collections.Generic;
@@ -37,7 +38,7 @@ namespace airclib
         public event OnUserJoinedChannelEventHandler OnUserJoinedChannel;
         public event OnUserLeftChannelEventHandler OnUserLeftChannel;
 
-        #region "Connection"
+        #region Connection
         /// <summary>
         /// Connection event, connects to irc server.
         /// </summary>
@@ -148,7 +149,7 @@ namespace airclib
         }
         #endregion
 
-        #region "Reading"
+        #region Reading
         /// <summary>
         /// Reads channel or user private message. Returns PrivmsgData.
         /// </summary>
@@ -324,7 +325,7 @@ namespace airclib
         }
         #endregion
 
-        #region "Connection States"
+        #region Connection States
         /// <summary>
         /// Bool, returns isConnected.
         /// </summary>
@@ -364,7 +365,7 @@ namespace airclib
         }
         #endregion
 
-        #region "IRC Commands"
+        #region IRC Commands
         /// <summary>
         /// Disconnects from server.
         /// </summary>
@@ -614,6 +615,37 @@ namespace airclib
 
             string data = String.Format("USER {0} {1} {2} {3}", UserName, HostName, ServerName, RealName);
             SendData(data);
+        }
+        #endregion
+
+        #region Text Effects
+        /// <summary>
+        /// Changes color of wanted text.
+        /// </summary>
+        /// <param name="Text">Wanted text.</param>
+        /// <param name="Color">Wanted color.</param>
+        /// <returns>Returns text with changed color.</returns>
+        public string ColorText(string Text, ColorMessages Color)
+        {
+            return ColoredFont + (int)Color + " " + Text + ColoredFont;
+        }
+        /// <summary>
+        /// Makes wanted text bold.
+        /// </summary>
+        /// <param name="Text">Wanted text.</param>
+        /// <returns>Text with bold effect.</returns>
+        public string BoldText(string Text)
+        {
+            return ColoredFont + " " + Text + ColoredFont;
+        }
+        /// <summary>
+        /// Underlines wanted text.
+        /// </summary>
+        /// <param name="Text">Wanted text.</param>
+        /// <returns>Underlined text.</returns>
+        public string UnderlineText(string Text)
+        {
+            return UnderlineFont + " " + Text + UnderlineFont;
         }
         #endregion
     }

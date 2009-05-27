@@ -1,7 +1,8 @@
 ﻿/* Locals.cs
-   Advanced IRC Library Project (airclib)
-   See LICENSE file for Copyrights
-   Website "http://code.google.com/p/airclib/" */
+ * Advanced IRC Library Project (airclib)
+ * See LICENSE file for Copyright
+ * Website "http://code.google.com/p/airclib/" 
+ */
 
 using System;
 using System.Collections.Generic;
@@ -12,6 +13,7 @@ namespace airclib.locals
 {
     public abstract class Locals
     {
+        #region Structures
         public struct IrcServer
         {
             public string Server;
@@ -39,7 +41,9 @@ namespace airclib.locals
             public string Target;
             public string Action;
         }
+        #endregion
 
+        #region Enums
         public enum DataType : int
         {
             MSGTYPE_USER = 0,
@@ -68,6 +72,13 @@ namespace airclib.locals
             Light_Gray = 15,
             White = 16
         }
+        #endregion
+
+        #region Text Effects
+        public const char BoldFont = '\u0002';
+        public const char ColoredFont = '\u0003';
+        public const char UnderlineFont = '\u001F';
+        #endregion
     }
 }
 
