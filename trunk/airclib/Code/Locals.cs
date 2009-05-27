@@ -36,6 +36,7 @@ namespace airclib.locals
         public struct ActionData
         {
             public string Sender;
+            public string Target;
             public string Action;
         }
 
