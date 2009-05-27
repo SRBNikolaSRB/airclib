@@ -598,6 +598,23 @@ namespace airclib
             else
                 SendData("AWAY " + Message);
         }
+        /// <summary>
+        /// Sets user info. Args talk for them self.
+        /// </summary>
+        /// <param name="UserName"></param>
+        /// <param name="HostName"></param>
+        /// <param name="ServerName"></param>
+        /// <param name="RealName"></param>
+        public void SetUserInfo(string UserName, string HostName, string ServerName, string RealName)
+        {
+            // Command: USER
+            // Parameters: <username> <hostname> <servername> <realname>
+            if (!isConnected)
+                return;
+
+            string data = String.Format("USER {0} {1} {2} {3}", UserName, HostName, ServerName, RealName);
+            SendData(data);
+        }
         #endregion
     }
 }
