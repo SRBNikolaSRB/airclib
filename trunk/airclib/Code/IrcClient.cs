@@ -30,6 +30,8 @@ namespace airclib
         public delegate void OnDataSentEventHandler(string Data);
         public event OnReciveDataEventHandler OnReciveData;
         public delegate void OnReciveDataEventHandler(string Data);
+        public event OnChannelJoinEventHandler OnChannelJoin;
+        public delegate void OnChannelJoinEventHandler();
 
         #region "Connection"
         /// <summary>
@@ -372,9 +374,10 @@ namespace airclib
 
             SendData("JOIN " + Channel);
 
+            if (OnChannelJoin != null)
+                OnChannelJoin();
+
             ChannelCount++;
-            GetTopic(Channel);
-            GetNames(Channel);
         }
         /// <summary>
         /// Leaves channel.
