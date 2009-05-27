@@ -48,6 +48,25 @@ namespace airclib.locals
             MSGTYPE_ACTION = 4,
             NULL = 5
         }
+        public enum ColorMessages : int
+        {
+            Black = 01,
+            Navy_Blue = 02,
+            Green = 03,
+            Red = 04,
+            Brown = 05,
+            Purple = 06,
+            Olive = 07,
+            Yellow = 08,
+            Lime_Green = 09,
+            Teal = 10,
+            Aqua_Light = 11,
+            Royal_Blue = 12,
+            Hot_Pink = 13,
+            Dark_Gray = 14,
+            Light_Gray = 15,
+            White = 16
+        }
     }
 }
 
