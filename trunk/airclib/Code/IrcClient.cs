@@ -248,10 +248,17 @@ namespace airclib
             string[] sp = { " " };
             string[] msg = Message.Split(sp, 4, StringSplitOptions.None);
 
-            cd.Sender = msg[0];
-            cd.Command = msg[1];
-            cd.Target = msg[2];
-            cd.Message = ReadOnlyMessage(msg[3]);
+            try
+            {
+                cd.Sender = msg[0];
+                cd.Command = msg[1];
+                cd.Target = msg[2];
+                cd.Message = ReadOnlyMessage(msg[3]);
+            }
+            catch
+            {
+                return cd;
+            }
 
             return cd;
         }
