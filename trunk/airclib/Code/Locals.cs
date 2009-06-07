@@ -75,9 +75,10 @@ namespace airclib.locals
         #endregion
 
         #region Text Effects
-        public const char BoldFont = '\u0002';
-        public const char ColoredFont = '\u0003';
-        public const char UnderlineFont = '\u001F';
+        public const string BoldFont = "\u0002";
+        public const string ColoredFont = "\u0003";
+        public const string UnderlineFont = "\u001F";
+        public const string FontEnd = "\u000E";
         #endregion
     }
 }

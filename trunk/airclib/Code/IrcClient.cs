@@ -634,7 +634,7 @@ namespace airclib
         /// <returns>Returns text with changed color.</returns>
         public string ColorText(string Text, ColorMessages Color)
         {
-            return ColoredFont + (int)Color + " " + Text + ColoredFont;
+            return ColoredFont + (int)Color + Text + FontEnd;
         }
         /// <summary>
         /// Makes wanted text bold.
@@ -643,7 +643,7 @@ namespace airclib
         /// <returns>Text with bold effect.</returns>
         public string BoldText(string Text)
         {
-            return ColoredFont + " " + Text + ColoredFont;
+            return BoldFont + Text + FontEnd;
         }
         /// <summary>
         /// Underlines wanted text.
@@ -652,7 +652,7 @@ namespace airclib
         /// <returns>Underlined text.</returns>
         public string UnderlineText(string Text)
         {
-            return UnderlineFont + " " + Text + UnderlineFont;
+            return UnderlineFont + Text + FontEnd;
         }
         #endregion
     }
