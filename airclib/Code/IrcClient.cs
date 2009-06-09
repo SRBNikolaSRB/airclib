@@ -4,6 +4,7 @@
  * Website "http://code.google.com/p/airclib/" 
  */
 
+#region Using...
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -11,9 +12,13 @@ using System.Net.Sockets;
 using System.Net;
 using System.IO;
 using airclib.locals;
+#endregion
 
 namespace airclib
 {
+    /// <summary>
+    /// IrcClient class, main class of airclib.
+    /// </summary>
     public class IrcClient : Locals
     {
         private TcpClient irc = new TcpClient();
@@ -59,6 +64,10 @@ namespace airclib
                 return;
             }
         }
+        /// <summary>
+        /// Connection event, connects to wanted "IrcServer"
+        /// </summary>
+        /// <param name="Server">Server structure.</param>
         public void Connect(IrcServer Server)
         {
             try
@@ -344,6 +353,10 @@ namespace airclib
             else
                 return false;
         }
+        /// <summary>
+        /// Returns channel count.
+        /// </summary>
+        /// <returns></returns>
         public bool IsInChannel()
         {
             if (ChannelCount != 0)
@@ -440,21 +453,6 @@ namespace airclib
                 return;
 
             SendData("NAMES " + Channel);
-        }
-        /// <summary>
-        /// Changes, sets topic to wanted channel.
-        /// </summary>
-        /// <param name="Channel">Wanted Channel.</param>
-        /// <param name="Topic">Wanted Topic.</param>
-        public void SetTopic(string Channel, string Topic)
-        {
-            if (!isConnected || ChannelCount == 0)
-                return;
-
-
-
-            string Data = String.Format("TOPIC {0} :{1}", Channel, Topic);
-            SendData(Data);
         }
         /// <summary>
         /// Query, messages nick.
@@ -653,6 +651,100 @@ namespace airclib
         public string UnderlineText(string Text)
         {
             return UnderlineFont + Text + FontEnd;
+        }
+        #endregion
+
+        #region Channel Administration
+        /// <summary>
+        /// Kicks wanted user from channel.
+        /// </summary>
+        /// <param name="Channel">Channel to kick from.</param>
+        /// <param name="User">Wanted user.</param>
+        public void Kick(string Channel, string User)
+        {
+            if (!isConnected && ChannelCount <= 0)
+                return;
+
+            SendData(String.Format("KICK {0} {1}", Channel, User));
+        }
+        /// <summary>
+        /// Kicks wanted user from channel. With message.
+        /// </summary>
+        /// <param name="Channel">Channel to kick from.</param>
+        /// <param name="User">Wanted user.</param>
+        /// <param name="Message">Message, reason.</param>
+        public void Kick(string Channel, string User, string Message)
+        {
+            if (!isConnected && ChannelCount <= 0)
+                return;
+
+            SendData(String.Format("KICK {0} {1} {2}", Channel, User, Message));
+        }
+        /// <summary>
+        /// Bans user from channel.
+        /// </summary>
+        /// <param name="Channel">From channel.</param>
+        /// <param name="User">Wanted user.</param>
+        public void Ban(string Channel, string User)
+        {
+            if (!isConnected && ChannelCount <= 0)
+                return;
+
+            SendData(String.Format("MODE {0} +b {1}", Channel, User));
+        }
+        /// <summary>
+        /// Unbans user from channel.
+        /// </summary>
+        /// <param name="Channel">From channel.</param>
+        /// <param name="User">Wanted user.</param>
+        public void UnBan(string Channel, string User)
+        {
+            if (!isConnected && ChannelCount <= 0)
+                return;
+
+            SendData(String.Format("MODE {0} -b {1}", Channel, User));
+        }
+        /// <summary>
+        /// Bans, than kicks wanted user in wanted channel.
+        /// </summary>
+        /// <param name="Channel">Channel location.</param>
+        /// <param name="User">Wanted user.</param>
+        public void KickBan(string Channel, string User)
+        {
+            if (!isConnected && ChannelCount <= 0)
+                return;
+
+            SendData(String.Format("MODE {0} +b {1}", Channel, User));
+            SendData(String.Format("KICK {0} {1} {2}", Channel, User));
+        }
+        /// <summary>
+        /// Bans, than kicks wanted user in wanted channel. With message.
+        /// </summary>
+        /// <param name="Channel">Channel location.</param>
+        /// <param name="User">Wanted user.</param>
+        /// <param name="Message">Good by message, reason.</param>
+        public void KickBan(string Channel, string User, string Message)
+        {
+            if (!isConnected && ChannelCount <= 0)
+                return;
+
+            SendData(String.Format("MODE {0} +b {1}", Channel, User));
+            SendData(String.Format("KICK {0} {1} {2}", Channel, User, Message));
+        }
+        /// <summary>
+        /// Changes, sets topic to wanted channel.
+        /// </summary>
+        /// <param name="Channel">Wanted Channel.</param>
+        /// <param name="Topic">Wanted Topic.</param>
+        public void SetTopic(string Channel, string Topic)
+        {
+            if (!isConnected || ChannelCount == 0)
+                return;
+
+
+
+            string Data = String.Format("TOPIC {0} :{1}", Channel, Topic);
+            SendData(Data);
         }
         #endregion
     }
