@@ -171,7 +171,7 @@ namespace airclib
             if (!isConnected)
                 return pmsg;
 
-            if (!Data.Contains("PRIVMSG"))
+            if (!Data.Contains("PRIVMSG") && !Data.Contains("NOTICE"))
             {
                 pmsg.Type = DataType.MSGTYPE_DEFAULT;
                 pmsg.WholeData = Data;
@@ -330,7 +330,7 @@ namespace airclib
                 return DataType.NULL;
 
             if (Data.Contains("PRIVMSG"))
-                if (Data.Contains("#") && ChannelCount != 0 && !Data.Contains("INV") && !Data.Contains("ACTION ")) // must be a channel type
+                if (ReadPrivmsg(Data).Command != "NOTICE" && ReadPrivmsg(Data).Target.Contains("#") && ChannelCount != 0) // must be a channel type
                     return DataType.MSGTYPE_CHANNEL;
                 else if (Data.Contains("ACTION "))
                     return DataType.MSGTYPE_ACTION;
