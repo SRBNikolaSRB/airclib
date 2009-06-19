@@ -399,7 +399,7 @@ namespace airclib
         /// <param name="Message">Leaving message.</param>
         public void Quit(string Message)
         {
-            SendData("QUIT " + Message);
+            SendData("QUIT :" + Message);
             irc.Close();
         }
         /// <summary>
