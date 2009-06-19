@@ -329,8 +329,8 @@ namespace airclib
             if (!isConnected)
                 return DataType.NULL;
 
-            if (Data.Contains("PRIVMSG"))
-                if (ReadPrivmsg(Data).Command != "NOTICE" && ReadPrivmsg(Data).Target.Contains("#") && ChannelCount != 0) // must be a channel type
+            if (Data.Contains("PRIVMSG") || Data.Contains("NOTICE"))
+                if (ReadPrivmsg(Data).Command != "NOTICE" && Data.Split(' ')[2].StartsWith("#") && ChannelCount != 0) // must be a channel type
                     return DataType.MSGTYPE_CHANNEL;
                 else if (Data.Contains("ACTION "))
                     return DataType.MSGTYPE_ACTION;
@@ -556,7 +556,7 @@ namespace airclib
         /// <param name="Message">Message.</param>
         public void MessageChannel(string Channel, string Message)
         {
-            if (!isConnected || ChannelCount == 0)
+            if (!isConnected)
                 return;
 
             string Data = String.Format("PRIVMSG {0} :{1}", Channel, Message);
@@ -570,7 +570,7 @@ namespace airclib
         /// <param name="Color">Wanted color.</param>
         public void MessageChannel(string Channel, string Message, ColorMessages Color)
         {
-            if (!isConnected || ChannelCount == 0)
+            if (!isConnected)
                 return;
 
             string Data = String.Format("PRIVMSG {0} :\u0003{1} {2}", Channel, (int)Color, Message);
