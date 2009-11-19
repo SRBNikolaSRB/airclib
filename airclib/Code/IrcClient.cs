@@ -11,6 +11,7 @@ using System.Text;
 using System.Net.Sockets;
 using System.Net;
 using System.IO;
+using System.Threading;
 using airclib.locals;
 #endregion
 
@@ -23,6 +24,7 @@ namespace airclib
     {
         private TcpClient irc = new TcpClient();
         private NetworkStream Stream;
+        private Thread listenThread;
 
         //Vars
         private bool isConnected;
@@ -108,54 +110,21 @@ namespace airclib
         /// <param name="bListen">If set true, it will start listening.</param>
         public void Listen(bool bListen)
         {
-            if (!bListen || !isConnected || Stream == null)
+            if (!isConnected || Stream == null)
                 return;
+
+            if (!bListen && listenThread.IsAlive)
+                listenThread.Abort();
 
             try
             {
-                StreamReader Reader = new StreamReader(irc.GetStream());
-                for (int i = 0; i < 10; i++)
-                {
-                    string Data = Reader.ReadLine();
-                    while (Data != "")
-                    {
-                        if (Data.Contains("PING"))
-                        {
-                            SendData(Data.Replace("PING", "PONG"));
-                            Data = "";
-                        }
-                        else if (Data.Contains(" JOIN #")) // hooks OnUserJoinedChannel(string UserNick, string Channel)
-                        {
-                            string[] dt = Data.Split(' ');
-
-                            if (OnUserJoinedChannel != null && ReadNick(dt[0]) != GetNick())
-                                OnUserJoinedChannel(ReadNick(dt[0]), dt[2]);
-                        }
-                        else if (Data.Contains(" PART #")) // hooks OnUserLeftChannel(string UserNick, string Channel)
-                        {
-                            string[] dt = Data.Split(' ');
-                            if (OnUserLeftChannel != null && ReadNick(dt[0]) != GetNick())
-                                OnUserLeftChannel(ReadNick(dt[0]), dt[2]);
-                        }
-
-                        if (OnReciveData != null && Data != null)
-                            OnReciveData(Data);
-
-                        Data = "";
-                        Data = Reader.ReadLine();
-                        if (i == 10)
-                        {
-                            Listen(bListen);
-                            return;
-                        }
-                    }
-                }
+                listenThread = new Thread(KeepListen);
+                listenThread.Start();
             }
             catch
-            {
-                Listen(true);
-            }
+            { }
         }
+
         #endregion
 
         #region Reading
@@ -747,6 +716,38 @@ namespace airclib
             SendData(Data);
         }
         #endregion
+
+        private void KeepListen()
+        {
+            StreamReader Reader = new StreamReader(irc.GetStream());
+            string Data = "";
+            while ((Data = Reader.ReadLine()) != "")
+            {
+                if (Data.Contains("PING"))
+                {
+                    SendData(Data.Replace("PING", "PONG"));
+                    Data = "";
+                }
+                else if (Data.Contains(" JOIN #")) // hooks OnUserJoinedChannel(string UserNick, string Channel)
+                {
+                    string[] dt = Data.Split(' ');
+
+                    if (OnUserJoinedChannel != null && ReadNick(dt[0]) != GetNick())
+                        OnUserJoinedChannel(ReadNick(dt[0]), dt[2]);
+                }
+                else if (Data.Contains(" PART #")) // hooks OnUserLeftChannel(string UserNick, string Channel)
+                {
+                    string[] dt = Data.Split(' ');
+                    if (OnUserLeftChannel != null && ReadNick(dt[0]) != GetNick())
+                        OnUserLeftChannel(ReadNick(dt[0]), dt[2]);
+                }
+
+                if (OnReciveData != null && Data != null)
+                    OnReciveData(Data);
+
+            }
+        }
     }
 }
+
 
