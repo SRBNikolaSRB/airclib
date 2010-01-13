@@ -14,6 +14,7 @@ namespace airclib.locals
     public abstract class Locals
     {
         #region Structures
+
         public struct IrcServer
         {
             public string Server;
@@ -41,9 +42,11 @@ namespace airclib.locals
             public string Target;
             public string Action;
         }
+
         #endregion
 
         #region Enums
+
         public enum DataType : int
         {
             MSGTYPE_USER = 0,
@@ -72,13 +75,16 @@ namespace airclib.locals
             Light_Gray = 15,
             White = 16
         }
+
         #endregion
 
         #region Text Effects
+
         public const string BoldFont = "\u0002";
         public const string ColoredFont = "\u0003";
         public const string UnderlineFont = "\u001F";
         public const string FontEnd = "\u000E";
+
         #endregion
     }
 }

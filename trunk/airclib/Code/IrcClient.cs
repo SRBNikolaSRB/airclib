@@ -22,14 +22,18 @@ namespace airclib
     /// </summary>
     public class IrcClient : Locals
     {
-        private TcpClient irc = new TcpClient();
-        private NetworkStream Stream;
-        private Thread listenThread;
+        #region Events and variables
 
-        //Vars
-        private bool isConnected;
-        private int ChannelCount = 0;
-        private string Nick = "";
+        //Variables
+        private TcpClient m_connection = new TcpClient();
+        private NetworkStream m_stream;
+        private Thread m_listenThread;
+
+        private bool m_isConnected = false;
+        private int m_channelCount = 0;
+        private string m_nick = "";
+        private string m_server = "";
+        private int m_port = 0;
 
         //Events
         public delegate void OnConnectEventHandler();
@@ -45,7 +49,79 @@ namespace airclib
         public event OnUserJoinedChannelEventHandler OnUserJoinedChannel;
         public event OnUserLeftChannelEventHandler OnUserLeftChannel;
 
+        #endregion
+
+        #region Class Constructors
+
+        /// <summary>
+        /// Initializes IrcClient class.
+        /// </summary>
+        /// <param name="Server">Server that IrcClient will connect to.</param>
+        /// <param name="Port">Port of server.</param>
+        public IrcClient(string Server, int Port)
+        {
+            m_server = Server;
+            m_port = Port;
+        }
+
+        /// <summary>
+        /// Initializes IrcClient class.
+        /// </summary>
+        /// <param name="Server">Server that IrcClient will connect to.</param>
+        public IrcClient(IrcServer Server)
+            : this(Server.Server, Server.Port)
+        {
+        }
+
+        #endregion
+
+        #region Get, set private variables
+
+        public int ServerPort
+        {
+            get
+            {
+                return m_port;
+            }
+            set
+            {
+                m_port = ServerPort;
+            }
+        }
+
+        public string ServerAdress
+        {
+            get
+            {
+                return m_server;
+            }
+            set
+            {
+                m_server = ServerAdress;
+            }
+        }
+        #endregion
+
         #region Connection
+
+        /// <summary>
+        /// Connects to irc server.
+        /// </summary>
+        public void Connect()
+        {
+            try
+            {
+                m_connection.Connect(m_server, m_port);
+                m_stream = m_connection.GetStream();
+                m_isConnected = true;
+                if (OnConnect != null)
+                    OnConnect();
+            }
+            catch
+            {
+                return;
+            }
+        }
         /// <summary>
         /// Connection event, connects to irc server.
         /// </summary>
@@ -55,9 +131,9 @@ namespace airclib
         {
             try
             {
-                irc.Connect(Server, Port);
-                Stream = irc.GetStream();
-                isConnected = true;
+                m_connection.Connect(Server, Port);
+                m_stream = m_connection.GetStream();
+                m_isConnected = true;
                 if (OnConnect != null)
                     OnConnect();
             }
@@ -74,9 +150,9 @@ namespace airclib
         {
             try
             {
-                irc.Connect(Server.Server, Server.Port);
-                Stream = irc.GetStream();
-                isConnected = true;
+                m_connection.Connect(Server.Server, Server.Port);
+                m_stream = m_connection.GetStream();
+                m_isConnected = true;
                 if (OnConnect != null)
                     OnConnect();
             }
@@ -93,8 +169,8 @@ namespace airclib
         {
             try
             {
-                StreamWriter Writer = new StreamWriter(Stream);
-                Writer.WriteLine(Data, Stream);
+                StreamWriter Writer = new StreamWriter(m_stream);
+                Writer.WriteLine(Data, m_stream);
                 Writer.Flush();
                 if (OnDataSent != null)
                     OnDataSent(Data);
@@ -110,16 +186,16 @@ namespace airclib
         /// <param name="bListen">If set true, it will start listening.</param>
         public void Listen(bool bListen)
         {
-            if (!isConnected || Stream == null)
+            if (!m_isConnected || m_stream == null)
                 return;
 
-            if (!bListen && listenThread.IsAlive)
-                listenThread.Abort();
+            if (!bListen && m_listenThread.IsAlive)
+                m_listenThread.Abort();
 
             try
             {
-                listenThread = new Thread(KeepListen);
-                listenThread.Start();
+                m_listenThread = new Thread(KeepListen);
+                m_listenThread.Start();
             }
             catch
             { }
@@ -137,7 +213,7 @@ namespace airclib
         {
             PrivmsgData pmsg = new PrivmsgData();
 
-            if (!isConnected)
+            if (!m_isConnected)
                 return pmsg;
 
             if (!Data.Contains("PRIVMSG") && !Data.Contains("NOTICE"))
@@ -151,10 +227,9 @@ namespace airclib
             {
                 try
                 {
-                    if (ChannelCount == 0)
+                    if (m_channelCount == 0)
                     {
-                        string[] sp = { " " };
-                        string[] sData = Data.Split(sp, 4, StringSplitOptions.None);
+                        string[] sData = Data.Split(new string[] { " " }, 4, StringSplitOptions.None);
 
                         pmsg.Sender = sData[0];
                         pmsg.Command = sData[1];
@@ -167,8 +242,7 @@ namespace airclib
                     }
                     else
                     {
-                        string[] sp = { " " };
-                        string[] sData = Data.Split(sp, 4, StringSplitOptions.None);
+                        string[] sData = Data.Split(new string[] { " " }, 4, StringSplitOptions.None);
 
                         pmsg.Sender = sData[0];
                         pmsg.Command = sData[1];
@@ -176,7 +250,7 @@ namespace airclib
                         pmsg.Message = sData[3];
                         pmsg.WholeData = Data;
 
-                        if (pmsg.Target.Contains("#")) // if it does, that is channel
+                        if (pmsg.Target.StartsWith("#")) // if it does, that is channel
                             pmsg.Type = DataType.MSGTYPE_CHANNEL; // Than message is channel type
                         else
                             pmsg.Type = DataType.MSGTYPE_USER;
@@ -197,13 +271,12 @@ namespace airclib
         /// <returns>Nickname.</returns>
         public string ReadNick(string Sender)
         {
-            if (!isConnected)
+            if (!m_isConnected)
                 return null;
 
             try
             {
-                string[] sp = { ":", "!" };
-                string[] sp1 = Sender.Split(sp, 2, StringSplitOptions.RemoveEmptyEntries);
+                string[] sp1 = Sender.Split(new string[] { ":", "!" }, 2, StringSplitOptions.RemoveEmptyEntries);
                 return sp1[0];
             }
             catch
@@ -220,11 +293,10 @@ namespace airclib
         {
             ServerData cd = new ServerData();
 
-            if (!isConnected)
+            if (!m_isConnected)
                 return cd;
 
-            string[] sp = { " " };
-            string[] msg = Message.Split(sp, 4, StringSplitOptions.None);
+            string[] msg = Message.Split( new string[] { " " }, 4, StringSplitOptions.None);
 
             try
             {
@@ -237,7 +309,6 @@ namespace airclib
             {
                 return cd;
             }
-
             return cd;
         }
         /// <summary>
@@ -247,7 +318,7 @@ namespace airclib
         /// <returns>String.</returns>
         public string ReadOnlyMessage(string Message)
         {
-            if (!isConnected)
+            if (!m_isConnected)
                 return null;
 
             try
@@ -269,13 +340,12 @@ namespace airclib
         {
             ActionData ad = new ActionData();
 
-            if (GetDataType(Data) != DataType.MSGTYPE_ACTION && !isConnected)
+            if (GetDataType(Data) != DataType.MSGTYPE_ACTION && !m_isConnected)
                 return ad;
 
             try
             {
-                string[] st = { " " };
-                string[] dt = Data.Split(st, 4, StringSplitOptions.None);
+                string[] dt = Data.Split(new string[] { " " }, 4, StringSplitOptions.None);
                 string newData = dt[3].Replace(":ACTION ", "");
                 newData = newData.Replace("", "");
                 ad.Sender = ReadNick(dt[0]);
@@ -295,11 +365,11 @@ namespace airclib
         /// <returns></returns>
         public DataType GetDataType(string Data)
         {
-            if (!isConnected)
+            if (!m_isConnected)
                 return DataType.NULL;
 
             if (Data.Contains("PRIVMSG") || Data.Contains("NOTICE"))
-                if (ReadPrivmsg(Data).Command != "NOTICE" && Data.Split(' ')[2].StartsWith("#") && ChannelCount != 0) // must be a channel type
+                if (ReadPrivmsg(Data).Command != "NOTICE" && Data.Split(' ')[2].StartsWith("#") && m_channelCount != 0) // must be a channel type
                     return DataType.MSGTYPE_CHANNEL;
                 else if (Data.Contains("ACTION "))
                     return DataType.MSGTYPE_ACTION;
@@ -317,7 +387,7 @@ namespace airclib
         /// <returns></returns>
         public bool Connected()
         {
-            if (isConnected == true)
+            if (m_isConnected == true)
                 return true;
             else
                 return false;
@@ -328,7 +398,7 @@ namespace airclib
         /// <returns></returns>
         public bool IsInChannel()
         {
-            if (ChannelCount != 0)
+            if (m_channelCount != 0)
                 return true;
             else
                 return false;
@@ -339,7 +409,7 @@ namespace airclib
         /// <returns>String</returns>
         public string GetNick()
         {
-            return Nick;
+            return m_nick;
         }
         /// <summary>
         /// Returns clients current stearm.
@@ -347,8 +417,8 @@ namespace airclib
         /// <returns></returns>
         public NetworkStream GetStream()
         {
-            if (Stream != null)
-                return Stream;
+            if (m_stream != null)
+                return m_stream;
             else
                 return null;
         }
@@ -360,7 +430,7 @@ namespace airclib
         /// </summary>
         public void Disconnect()
         {
-            irc.Close();
+            m_connection.Close();
         }
         /// <summary>
         /// Quits, disconnects from server, with leaving message.
@@ -369,7 +439,7 @@ namespace airclib
         public void Quit(string Message)
         {
             SendData("QUIT :" + Message);
-            irc.Close();
+            m_connection.Close();
         }
         /// <summary>
         /// Joins channel.
@@ -377,7 +447,7 @@ namespace airclib
         /// <param name="Channel">Channel name.</param>
         public void JoinChannel(string Channel)
         {
-            if (!isConnected)
+            if (!m_isConnected)
                 return;
 
             SendData("JOIN " + Channel);
@@ -385,7 +455,7 @@ namespace airclib
             if (OnChannelJoin != null)
                 OnChannelJoin(Channel);
 
-            ChannelCount++;
+            m_channelCount++;
             GetTopic(Channel);
             GetNames(Channel);
         }
@@ -395,11 +465,11 @@ namespace airclib
         /// <param name="Channel">Channel.</param>
         public void LeaveChannel(string Channel)
         {
-            if (!isConnected || ChannelCount == 0)
+            if (!m_isConnected || m_channelCount == 0)
                 return;
 
             SendData("PART " + Channel);
-            ChannelCount--;
+            m_channelCount--;
         }
         /// <summary>
         /// Requests topic channel.
@@ -407,7 +477,7 @@ namespace airclib
         /// <param name="Channel">Channel.</param>
         public void GetTopic(string Channel)
         {
-            if (!isConnected || ChannelCount == 0)
+            if (!m_isConnected || m_channelCount == 0)
                 return;
 
             SendData("TOPIC " + Channel);
@@ -418,7 +488,7 @@ namespace airclib
         /// <param name="Channel">From channel.</param>
         public void GetNames(string Channel)
         {
-            if (!isConnected || ChannelCount == 0)
+            if (!m_isConnected || m_channelCount == 0)
                 return;
 
             SendData("NAMES " + Channel);
@@ -430,7 +500,7 @@ namespace airclib
         /// <param name="Message">Message.</param>
         public void MessageUser(string tNick, string Message)
         {
-            if (!isConnected)
+            if (!m_isConnected)
                 return;
 
             string Data = String.Format("PRIVMSG {0} :{1}", tNick, Message);
@@ -444,7 +514,7 @@ namespace airclib
         /// <param name="Color">Wanted message color.</param>
         public void MessageUser(string tNick, string Message, ColorMessages Color)
         {
-            if (!isConnected)
+            if (!m_isConnected)
                 return;
 
             string Data = String.Format("PRIVMSG {0} :\u0003{2} {1}", tNick, Message, (int)Color);
@@ -458,7 +528,7 @@ namespace airclib
         /// <param name="Channel">Target type, channel or user.</param>
         public void DoAction(string Target, string Action, bool Channel)
         {
-            if (!isConnected || ChannelCount == 0)
+            if (!m_isConnected || m_channelCount == 0)
                 return;
 
 
@@ -471,13 +541,13 @@ namespace airclib
         /// <param name="Nick">Wanted nick.</param>
         public void SetNick(string Nick)
         {
-            if (!isConnected)
+            if (!m_isConnected)
                 return;
 
             try
             {
                 SendData("NICK " + Nick);
-                this.Nick = Nick;
+                this.m_nick = Nick;
             }
             catch
             {
@@ -490,7 +560,7 @@ namespace airclib
         /// <param name="Nick">Users nick.</param>
         public void WhoIs(string Nick)
         {
-            if (!isConnected)
+            if (!m_isConnected)
                 return;
 
             SendData("WHOIS " + Nick);
@@ -502,7 +572,7 @@ namespace airclib
         /// <param name="Message">Notice.</param>
         public void Notice(string User, string Message)
         {
-            if (!isConnected || ChannelCount == 0)
+            if (!m_isConnected || m_channelCount == 0)
                 return;
 
             string Data = String.Format("NOTICE {0} :{1}", User, Message);
@@ -513,7 +583,7 @@ namespace airclib
         /// </summary>
         public void ServerMOTD()
         {
-            if (!isConnected)
+            if (!m_isConnected)
                 return;
 
             SendData("MOTD");
@@ -525,7 +595,7 @@ namespace airclib
         /// <param name="Message">Message.</param>
         public void MessageChannel(string Channel, string Message)
         {
-            if (!isConnected)
+            if (!m_isConnected)
                 return;
 
             string Data = String.Format("PRIVMSG {0} :{1}", Channel, Message);
@@ -539,7 +609,7 @@ namespace airclib
         /// <param name="Color">Wanted color.</param>
         public void MessageChannel(string Channel, string Message, ColorMessages Color)
         {
-            if (!isConnected)
+            if (!m_isConnected)
                 return;
 
             string Data = String.Format("PRIVMSG {0} :\u0003{1} {2}", Channel, (int)Color, Message);
@@ -552,7 +622,7 @@ namespace airclib
         /// <param name="Channel">Wanted channel.</param>
         public void InviteToChannel(string Nickname, string Channel)
         {
-            if (!isConnected)
+            if (!m_isConnected)
                 return;
 
             string Data = String.Format("INVITE {0} {1}", Nickname, Channel);
@@ -565,7 +635,7 @@ namespace airclib
         /// <param name="Message">Message, only works if Away is true.</param>
         public void SetAway(bool Away, string Message)
         {
-            if (!isConnected)
+            if (!m_isConnected)
                 return;
 
             if (!Away)
@@ -584,7 +654,7 @@ namespace airclib
         {
             // Command: USER
             // Parameters: <username> <hostname> <servername> <realname>
-            if (!isConnected)
+            if (!m_isConnected)
                 return;
 
             string data = String.Format("USER {0} {1} {2} {3}", UserName, HostName, ServerName, RealName);
@@ -631,7 +701,7 @@ namespace airclib
         /// <param name="User">Wanted user.</param>
         public void Kick(string Channel, string User)
         {
-            if (!isConnected && ChannelCount <= 0)
+            if (!m_isConnected && m_channelCount <= 0)
                 return;
 
             SendData(String.Format("KICK {0} {1}", Channel, User));
@@ -644,7 +714,7 @@ namespace airclib
         /// <param name="Message">Message, reason.</param>
         public void Kick(string Channel, string User, string Message)
         {
-            if (!isConnected && ChannelCount <= 0)
+            if (!m_isConnected && m_channelCount <= 0)
                 return;
 
             SendData(String.Format("KICK {0} {1} {2}", Channel, User, Message));
@@ -656,7 +726,7 @@ namespace airclib
         /// <param name="User">Wanted user.</param>
         public void Ban(string Channel, string User)
         {
-            if (!isConnected && ChannelCount <= 0)
+            if (!m_isConnected && m_channelCount <= 0)
                 return;
 
             SendData(String.Format("MODE {0} +b {1}", Channel, User));
@@ -668,7 +738,7 @@ namespace airclib
         /// <param name="User">Wanted user.</param>
         public void UnBan(string Channel, string User)
         {
-            if (!isConnected && ChannelCount <= 0)
+            if (!m_isConnected && m_channelCount <= 0)
                 return;
 
             SendData(String.Format("MODE {0} -b {1}", Channel, User));
@@ -680,7 +750,7 @@ namespace airclib
         /// <param name="User">Wanted user.</param>
         public void KickBan(string Channel, string User)
         {
-            if (!isConnected && ChannelCount <= 0)
+            if (!m_isConnected && m_channelCount <= 0)
                 return;
 
             SendData(String.Format("MODE {0} +b {1}", Channel, User));
@@ -694,7 +764,7 @@ namespace airclib
         /// <param name="Message">Good by message, reason.</param>
         public void KickBan(string Channel, string User, string Message)
         {
-            if (!isConnected && ChannelCount <= 0)
+            if (!m_isConnected && m_channelCount <= 0)
                 return;
 
             SendData(String.Format("MODE {0} +b {1}", Channel, User));
@@ -707,26 +777,25 @@ namespace airclib
         /// <param name="Topic">Wanted Topic.</param>
         public void SetTopic(string Channel, string Topic)
         {
-            if (!isConnected || ChannelCount == 0)
+            if (!m_isConnected || m_channelCount == 0)
                 return;
-
-
 
             string Data = String.Format("TOPIC {0} :{1}", Channel, Topic);
             SendData(Data);
         }
         #endregion
 
+        #region Private Functions
+
         private void KeepListen()
         {
-            StreamReader Reader = new StreamReader(irc.GetStream());
+            StreamReader Reader = new StreamReader(m_connection.GetStream());
             string Data = "";
             while ((Data = Reader.ReadLine()) != "")
             {
                 if (Data.Contains("PING"))
                 {
                     SendData(Data.Replace("PING", "PONG"));
-                    Data = "";
                 }
                 else if (Data.Contains(" JOIN #")) // hooks OnUserJoinedChannel(string UserNick, string Channel)
                 {
@@ -747,6 +816,8 @@ namespace airclib
 
             }
         }
+
+        #endregion
     }
 }
 
