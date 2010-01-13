@@ -28,18 +28,13 @@ namespace airclib
         private TcpClient m_connection = new TcpClient();
         private NetworkStream m_stream;
         private Thread m_listenThread;
+        private TextEffects m_effects = new TextEffects();
 
         private bool m_isConnected = false;
         private int m_channelCount = 0;
         private string m_nick = "";
         private string m_server = "";
         private int m_port = 0;
-
-        //Constants 
-        public const string BoldFont = "\u0002";
-        public const string ColoredFont = "\u0003";
-        public const string UnderlineFont = "\u001F";
-        public const string FontEnd = "\u000E";
 
         //Events
         public delegate void OnConnectEventHandler();
@@ -91,7 +86,7 @@ namespace airclib
             }
             set
             {
-                m_port = ServerPort;
+                m_port = value;
             }
         }
 
@@ -103,9 +98,20 @@ namespace airclib
             }
             set
             {
-                m_server = ServerAdress;
+                m_server = value;
             }
         }
+
+        public TextEffects Effects
+        {
+            get { return m_effects; }
+        }
+
+        public IrcChannel GetChannel(string Channel)
+        {
+            return new IrcChannel( m_channelCount, Channel, this );
+        }
+
         #endregion
 
         #region Connection
@@ -665,129 +671,6 @@ namespace airclib
 
             string data = String.Format("USER {0} {1} {2} {3}", UserName, HostName, ServerName, RealName);
             SendData(data);
-        }
-        #endregion
-
-        #region Text Effects
-        /// <summary>
-        /// Changes color of wanted text.
-        /// </summary>
-        /// <param name="Text">Wanted text.</param>
-        /// <param name="Color">Wanted color.</param>
-        /// <returns>Returns text with changed color.</returns>
-        public string ColorText(string Text, ColorMessages Color)
-        {
-            return ColoredFont + (int)Color + Text + FontEnd;
-        }
-        /// <summary>
-        /// Makes wanted text bold.
-        /// </summary>
-        /// <param name="Text">Wanted text.</param>
-        /// <returns>Text with bold effect.</returns>
-        public string BoldText(string Text)
-        {
-            return BoldFont + Text + FontEnd;
-        }
-        /// <summary>
-        /// Underlines wanted text.
-        /// </summary>
-        /// <param name="Text">Wanted text.</param>
-        /// <returns>Underlined text.</returns>
-        public string UnderlineText(string Text)
-        {
-            return UnderlineFont + Text + FontEnd;
-        }
-        #endregion
-
-        #region Channel Administration
-        /// <summary>
-        /// Kicks wanted user from channel.
-        /// </summary>
-        /// <param name="Channel">Channel to kick from.</param>
-        /// <param name="User">Wanted user.</param>
-        public void Kick(string Channel, string User)
-        {
-            if (!m_isConnected && m_channelCount <= 0)
-                return;
-
-            SendData(String.Format("KICK {0} {1}", Channel, User));
-        }
-        /// <summary>
-        /// Kicks wanted user from channel. With message.
-        /// </summary>
-        /// <param name="Channel">Channel to kick from.</param>
-        /// <param name="User">Wanted user.</param>
-        /// <param name="Message">Message, reason.</param>
-        public void Kick(string Channel, string User, string Message)
-        {
-            if (!m_isConnected && m_channelCount <= 0)
-                return;
-
-            SendData(String.Format("KICK {0} {1} {2}", Channel, User, Message));
-        }
-        /// <summary>
-        /// Bans user from channel.
-        /// </summary>
-        /// <param name="Channel">From channel.</param>
-        /// <param name="User">Wanted user.</param>
-        public void Ban(string Channel, string User)
-        {
-            if (!m_isConnected && m_channelCount <= 0)
-                return;
-
-            SendData(String.Format("MODE {0} +b {1}", Channel, User));
-        }
-        /// <summary>
-        /// Unbans user from channel.
-        /// </summary>
-        /// <param name="Channel">From channel.</param>
-        /// <param name="User">Wanted user.</param>
-        public void UnBan(string Channel, string User)
-        {
-            if (!m_isConnected && m_channelCount <= 0)
-                return;
-
-            SendData(String.Format("MODE {0} -b {1}", Channel, User));
-        }
-        /// <summary>
-        /// Bans, than kicks wanted user in wanted channel.
-        /// </summary>
-        /// <param name="Channel">Channel location.</param>
-        /// <param name="User">Wanted user.</param>
-        public void KickBan(string Channel, string User)
-        {
-            if (!m_isConnected && m_channelCount <= 0)
-                return;
-
-            SendData(String.Format("MODE {0} +b {1}", Channel, User));
-            SendData(String.Format("KICK {0} {1} {2}", Channel, User));
-        }
-        /// <summary>
-        /// Bans, than kicks wanted user in wanted channel. With message.
-        /// </summary>
-        /// <param name="Channel">Channel location.</param>
-        /// <param name="User">Wanted user.</param>
-        /// <param name="Message">Good by message, reason.</param>
-        public void KickBan(string Channel, string User, string Message)
-        {
-            if (!m_isConnected && m_channelCount <= 0)
-                return;
-
-            SendData(String.Format("MODE {0} +b {1}", Channel, User));
-            SendData(String.Format("KICK {0} {1} {2}", Channel, User, Message));
-        }
-        /// <summary>
-        /// Changes, sets topic to wanted channel.
-        /// </summary>
-        /// <param name="Channel">Wanted Channel.</param>
-        /// <param name="Topic">Wanted Topic.</param>
-        public void SetTopic(string Channel, string Topic)
-        {
-            if (!m_isConnected || m_channelCount == 0)
-                return;
-
-            string Data = String.Format("TOPIC {0} :{1}", Channel, Topic);
-            SendData(Data);
         }
         #endregion
 
