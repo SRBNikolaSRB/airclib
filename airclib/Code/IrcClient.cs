@@ -12,7 +12,7 @@ using System.Net.Sockets;
 using System.Net;
 using System.IO;
 using System.Threading;
-using airclib.locals;
+using airclib.Constants;
 #endregion
 
 namespace airclib
@@ -20,7 +20,7 @@ namespace airclib
     /// <summary>
     /// IrcClient class, main class of airclib.
     /// </summary>
-    public class IrcClient : Locals
+    public class IrcClient
     {
         #region Events and variables
 
@@ -34,6 +34,12 @@ namespace airclib
         private string m_nick = "";
         private string m_server = "";
         private int m_port = 0;
+
+        //Constants 
+        public const string BoldFont = "\u0002";
+        public const string ColoredFont = "\u0003";
+        public const string UnderlineFont = "\u001F";
+        public const string FontEnd = "\u000E";
 
         //Events
         public delegate void OnConnectEventHandler();
