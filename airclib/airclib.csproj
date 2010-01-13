@@ -38,8 +38,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Code\IrcChannel.cs" />
+    <Compile Include="Code\Effects.cs" />
     <Compile Include="Code\IrcClient.cs" />
-    <Compile Include="Code\Locals.cs" />
+    <Compile Include="Code\Constants.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
