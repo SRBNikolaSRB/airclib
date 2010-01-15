@@ -213,6 +213,15 @@ namespace airclib
             { }
         }
 
+        /// <summary>
+        /// Disconnects from server.
+        /// </summary>
+        public void Disconnect()
+        {
+            m_connection.Close();
+            m_isConnected = false;
+            m_channelCount = 0;
+        }
         #endregion
 
         #region Reading
@@ -437,13 +446,6 @@ namespace airclib
         #endregion
 
         #region IRC Commands
-        /// <summary>
-        /// Disconnects from server.
-        /// </summary>
-        public void Disconnect()
-        {
-            m_connection.Close();
-        }
         /// <summary>
         /// Quits, disconnects from server, with leaving message.
         /// </summary>
