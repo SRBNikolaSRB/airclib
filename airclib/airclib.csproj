@@ -42,6 +42,7 @@
     <Compile Include="Code\Effects.cs" />
     <Compile Include="Code\IrcClient.cs" />
     <Compile Include="Code\Constants.cs" />
+    <Compile Include="Code\IrcSReader.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -29,6 +29,7 @@ namespace airclib
         private NetworkStream m_stream;
         private Thread m_listenThread;
         private TextEffects m_effects = new TextEffects();
+        private IrcSReader m_stringReader;
 
         private bool m_isConnected = false;
         private int m_channelCount = 0;
@@ -63,6 +64,8 @@ namespace airclib
         {
             m_server = Server;
             m_port = Port;
+
+            m_stringReader = new IrcSReader(this);
         }
 
         /// <summary>
@@ -78,39 +81,38 @@ namespace airclib
 
         #region Get, set private variables
 
+        /// <summary>
+        /// Gets, sets current connections server port.
+        /// </summary>
         public int ServerPort
         {
-            get
-            {
-                return m_port;
-            }
-            set
-            {
-                m_port = value;
-            }
+            get {  return m_port; }
+            set { m_port = value; }
         }
 
+        /// <summary>
+        /// Gets, sets current connections server adress.
+        /// </summary>
         public string ServerAdress
         {
-            get
-            {
-                return m_server;
-            }
-            set
-            {
-                m_server = value;
-            }
+            get { return m_server; }
+            set { m_server = value; }
         }
 
-        public TextEffects Effects
-        {
-            get { return m_effects; }
-        }
+        /// <summary>
+        /// Gets current connections server count based on how much channels client is in.
+        /// </summary>
+        public int ChannelCount { get { return m_channelCount; } }
 
-        public IrcChannel GetChannel(string Channel)
-        {
-            return new IrcChannel( m_channelCount, Channel, this );
-        }
+        /// <summary>
+        /// Gives access to channel only commands.
+        /// </summary>
+        /// <param name="Channel">Channel we want to edit.</param>
+        /// <returns>Channel with Channel only functions.</returns>
+        public IrcChannel GetChannel(string Channel) { return new IrcChannel( m_channelCount, Channel, this ); }
+
+        public TextEffects Effects { get { return m_effects; } }
+        public IrcSReader GetReader() { return m_stringReader; }
 
         #endregion
 
@@ -221,183 +223,6 @@ namespace airclib
             m_connection.Close();
             m_isConnected = false;
             m_channelCount = 0;
-        }
-        #endregion
-
-        #region Reading
-        /// <summary>
-        /// Reads channel or user private message. Returns PrivmsgData.
-        /// </summary>
-        /// <param name="Data">Data to get readed.</param>
-        /// <returns>PrivmsgData.</returns>
-        public PrivmsgData ReadPrivmsg(string Data)
-        {
-            PrivmsgData pmsg = new PrivmsgData();
-
-            if (!m_isConnected)
-                return pmsg;
-
-            if (!Data.Contains("PRIVMSG") && !Data.Contains("NOTICE"))
-            {
-                pmsg.Type = DataType.MSGTYPE_DEFAULT;
-                pmsg.WholeData = Data;
-
-                return pmsg;
-            }
-            else
-            {
-                try
-                {
-                    if (m_channelCount == 0)
-                    {
-                        string[] sData = Data.Split(new string[] { " " }, 4, StringSplitOptions.None);
-
-                        pmsg.Sender = sData[0];
-                        pmsg.Command = sData[1];
-                        pmsg.Target = sData[2];
-                        pmsg.Message = sData[3];
-                        pmsg.Type = DataType.MSGTYPE_USER;
-                        pmsg.WholeData = Data;
-
-                        return pmsg;
-                    }
-                    else
-                    {
-                        string[] sData = Data.Split(new string[] { " " }, 4, StringSplitOptions.None);
-
-                        pmsg.Sender = sData[0];
-                        pmsg.Command = sData[1];
-                        pmsg.Target = sData[2];
-                        pmsg.Message = sData[3];
-                        pmsg.WholeData = Data;
-
-                        if (pmsg.Target.StartsWith("#")) // if it does, that is channel
-                            pmsg.Type = DataType.MSGTYPE_CHANNEL; // Than message is channel type
-                        else
-                            pmsg.Type = DataType.MSGTYPE_USER;
-
-                        return pmsg;
-                    }
-                }
-                catch
-                {
-                    return pmsg;
-                }
-            }
-        }
-        /// <summary>
-        /// Parses nickname of sender.
-        /// </summary>
-        /// <param name="Sender">Sender ID, i recommend using ReadPrivmsg's parsed sender.</param>
-        /// <returns>Nickname.</returns>
-        public string ReadNick(string Sender)
-        {
-            if (!m_isConnected)
-                return null;
-
-            try
-            {
-                string[] sp1 = Sender.Split(new string[] { ":", "!" }, 2, StringSplitOptions.RemoveEmptyEntries);
-                return sp1[0];
-            }
-            catch
-            {
-                return Sender;
-            }
-        }
-        /// <summary>
-        /// Reads data with server type.
-        /// </summary>
-        /// <param name="Message">Actual data.</param>
-        /// <returns>Returns server data structure.</returns>
-        public ServerData ReadServerData(string Message)
-        {
-            ServerData cd = new ServerData();
-
-            if (!m_isConnected)
-                return cd;
-
-            string[] msg = Message.Split( new string[] { " " }, 4, StringSplitOptions.None);
-
-            try
-            {
-                cd.Sender = msg[0];
-                cd.Command = msg[1];
-                cd.Target = msg[2];
-                cd.Message = ReadOnlyMessage(msg[3]);
-            }
-            catch
-            {
-                return cd;
-            }
-            return cd;
-        }
-        /// <summary>
-        /// Removes ":" from wanted message.
-        /// </summary>
-        /// <param name="Message">Wanted message.</param>
-        /// <returns>String.</returns>
-        public string ReadOnlyMessage(string Message)
-        {
-            if (!m_isConnected)
-                return null;
-
-            try
-            {
-                string cData = Message.Replace(":", "");
-                return cData;
-            }
-            catch
-            {
-                return Message;
-            }
-        }
-        /// <summary>
-        /// Reads action, with normal formular, action sender and action it self. Data should be action type.
-        /// </summary>
-        /// <param name="Data">Data, reccomended action type.</param>
-        /// <returns>ActionData structure.</returns>
-        public ActionData GetAction(string Data)
-        {
-            ActionData ad = new ActionData();
-
-            if (GetDataType(Data) != DataType.MSGTYPE_ACTION && !m_isConnected)
-                return ad;
-
-            try
-            {
-                string[] dt = Data.Split(new string[] { " " }, 4, StringSplitOptions.None);
-                string newData = dt[3].Replace(":ACTION ", "");
-                newData = newData.Replace("", "");
-                ad.Sender = ReadNick(dt[0]);
-                ad.Target = dt[2];
-                ad.Action = newData;
-                return ad;
-            }
-            catch
-            {
-                return ad;
-            }
-        }
-        /// <summary>
-        /// Reads irc data, returning its data type.
-        /// </summary>
-        /// <param name="Data"></param>
-        /// <returns></returns>
-        public DataType GetDataType(string Data)
-        {
-            if (!m_isConnected)
-                return DataType.NULL;
-
-            if (Data.Contains("PRIVMSG") || Data.Contains("NOTICE"))
-                if (ReadPrivmsg(Data).Command != "NOTICE" && Data.Split(' ')[2].StartsWith("#") && m_channelCount != 0) // must be a channel type
-                    return DataType.MSGTYPE_CHANNEL;
-                else if (Data.Contains("ACTION "))
-                    return DataType.MSGTYPE_ACTION;
-                else
-                    return DataType.MSGTYPE_USER;
-            else
-                return DataType.MSGTYPE_SERVER;
         }
         #endregion
 
@@ -678,6 +503,9 @@ namespace airclib
 
         #region Private Functions
 
+        /// <summary>
+        /// Main listener, threaded.
+        /// </summary>
         private void KeepListen()
         {
             StreamReader Reader = new StreamReader(m_connection.GetStream());
@@ -692,14 +520,14 @@ namespace airclib
                 {
                     string[] dt = Data.Split(' ');
 
-                    if (OnUserJoinedChannel != null && ReadNick(dt[0]) != GetNick())
-                        OnUserJoinedChannel(ReadNick(dt[0]), dt[2]);
+                    if (OnUserJoinedChannel != null && m_stringReader.ReadNick(dt[0]) != GetNick())
+                        OnUserJoinedChannel(m_stringReader.ReadNick(dt[0]), dt[2]);
                 }
                 else if (Data.Contains(" PART #")) // hooks OnUserLeftChannel(string UserNick, string Channel)
                 {
                     string[] dt = Data.Split(' ');
-                    if (OnUserLeftChannel != null && ReadNick(dt[0]) != GetNick())
-                        OnUserLeftChannel(ReadNick(dt[0]), dt[2]);
+                    if (OnUserLeftChannel != null && m_stringReader.ReadNick(dt[0]) != GetNick())
+                        OnUserLeftChannel(m_stringReader.ReadNick(dt[0]), dt[2]);
                 }
 
                 if (OnReciveData != null && Data != null)
