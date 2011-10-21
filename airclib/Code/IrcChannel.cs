@@ -11,8 +11,8 @@ namespace airclib
         private string m_channel;
         private IrcClient m_client;
 
-        public IrcChannel(int ChannelCount, string Channel, IrcClient Client )
-        {
+        public IrcChannel(int ChannelCount, string Channel, IrcClient Client ) 
+		{
             m_isConnected = Client.Connected();
             m_channelCount = ChannelCount;
             m_channel = Channel;
@@ -24,8 +24,7 @@ namespace airclib
         /// </summary>
         /// <param name="Channel">Channel to kick from.</param>
         /// <param name="User">Wanted user.</param>
-        public void Kick( string User)
-        {
+        public void Kick( string User) {
             if ( m_client != null && !m_isConnected && m_channelCount <= 0)
                 return;
 
@@ -37,8 +36,7 @@ namespace airclib
         /// <param name="Channel">Channel to kick from.</param>
         /// <param name="User">Wanted user.</param>
         /// <param name="Message">Message, reason.</param>
-        public void Kick( string User, string Message)
-        {
+        public void Kick( string User, string Message) {
             if (m_client != null && !m_isConnected && m_channelCount <= 0)
                 return;
 
@@ -49,8 +47,7 @@ namespace airclib
         /// </summary>
         /// <param name="Channel">From channel.</param>
         /// <param name="User">Wanted user.</param>
-        public void Ban( string User)
-        {
+        public void Ban( string User) {
             if (m_client != null && !m_isConnected && m_channelCount <= 0)
                 return;
 
@@ -61,8 +58,7 @@ namespace airclib
         /// </summary>
         /// <param name="Channel">From channel.</param>
         /// <param name="User">Wanted user.</param>
-        public void UnBan( string User)
-        {
+        public void UnBan( string User) {
             if (m_client != null && !m_isConnected && m_channelCount <= 0)
                 return;
 
@@ -73,8 +69,7 @@ namespace airclib
         /// </summary>
         /// <param name="Channel">Channel location.</param>
         /// <param name="User">Wanted user.</param>
-        public void KickBan( string User)
-        {
+        public void KickBan( string User) {
             if (m_client != null && !m_isConnected && m_channelCount <= 0)
                 return;
 
@@ -87,8 +82,7 @@ namespace airclib
         /// <param name="Channel">Channel location.</param>
         /// <param name="User">Wanted user.</param>
         /// <param name="Message">Good by message, reason.</param>
-        public void KickBan( string User, string Message)
-        {
+        public void KickBan( string User, string Message) {
             if (m_client != null && !m_isConnected && m_channelCount <= 0)
                 return;
 
@@ -100,8 +94,7 @@ namespace airclib
         /// </summary>
         /// <param name="Channel">Wanted Channel.</param>
         /// <param name="Topic">Wanted Topic.</param>
-        public void SetTopic( string Topic)
-        {
+        public void SetTopic( string Topic) {
             if (m_client != null && !m_isConnected && m_channelCount <= 0)
                 return;
 
