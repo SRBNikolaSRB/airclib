@@ -3,20 +3,13 @@ using System.Collections.Generic;
 using System.Text;
 using airclib.Constants;
 
-namespace airclib
+namespace airclib.StringReader
 {
     /// <summary>
     /// Handles and Analyses irc protocol.
     /// </summary>
-    public class IrcSReader 
+    public class IrcSReader
     {
-        private IrcClient m_client;
-
-        public IrcSReader(IrcClient Client)
-        {
-            m_client = Client;
-        }
-
         /// <summary>
         /// Reads channel or user private message. Returns PrivmsgData.
         /// </summary>
@@ -24,55 +17,30 @@ namespace airclib
         /// <returns>PrivmsgData.</returns>
         public PrivmsgData ReadPrivmsg(string Data)
         {
-            PrivmsgData pmsg = new PrivmsgData();
+            PrivmsgData msgData = new PrivmsgData();
 
             if (!Data.Contains("PRIVMSG") && !Data.Contains("NOTICE"))
             {
-                pmsg.Type = DataType.MSGTYPE_DEFAULT;
-                pmsg.WholeData = Data;
-
-                return pmsg;
+                msgData.Type = DataType.MSGTYPE_DEFAULT;
+                msgData.StringData = Data;
             }
             else
             {
-                try
-                {
-                    if (m_client.ChannelCount == 0)
-                    {
-                        string[] sData = Data.Split(new string[] { " " }, 4, StringSplitOptions.None);
+                string[] sData = Data.Split(new char[] { ' ' }, 4, StringSplitOptions.None);
 
-                        pmsg.Sender = sData[0];
-                        pmsg.Command = sData[1];
-                        pmsg.Target = sData[2];
-                        pmsg.Message = sData[3];
-                        pmsg.Type = DataType.MSGTYPE_USER;
-                        pmsg.WholeData = Data;
+                msgData.Sender = sData[0];
+                msgData.Command = sData[1];
+                msgData.Target = sData[2];
+                msgData.Message = sData[3];
+                msgData.StringData = Data;
 
-                        return pmsg;
-                    }
-                    else
-                    {
-                        string[] sData = Data.Split(new string[] { " " }, 4, StringSplitOptions.None);
-
-                        pmsg.Sender = sData[0];
-                        pmsg.Command = sData[1];
-                        pmsg.Target = sData[2];
-                        pmsg.Message = sData[3];
-                        pmsg.WholeData = Data;
-
-                        if (pmsg.Target.StartsWith("#")) // if it does, that is channel
-                            pmsg.Type = DataType.MSGTYPE_CHANNEL; // Than message is channel type
-                        else
-                            pmsg.Type = DataType.MSGTYPE_USER;
-
-                        return pmsg;
-                    }
-                }
-                catch
-                {
-                    return pmsg;
-                }
+                if (msgData.Target.StartsWith("#")) // if it does, that is channel
+                    msgData.Type = DataType.MSGTYPE_CHANNEL; // Than message is channel type
+                else
+                    msgData.Type = DataType.MSGTYPE_USER;
             }
+
+            return msgData;
         }
         /// <summary>
         /// Parses nickname of sender.
@@ -81,39 +49,7 @@ namespace airclib
         /// <returns>Nickname.</returns>
         public string ReadNick(string Sender)
         {
-            try
-            {
-                string[] sp1 = Sender.Split(new string[] { ":", "!" }, 2, StringSplitOptions.RemoveEmptyEntries);
-                return sp1[0];
-            }
-            catch
-            {
-                return Sender;
-            }
-        }
-        /// <summary>
-        /// Reads data with server type.
-        /// </summary>
-        /// <param name="Message">Actual data.</param>
-        /// <returns>Returns server data structure.</returns>
-        public ServerData ReadServerData(string Message)
-        {
-            ServerData cd = new ServerData();
-
-            string[] msg = Message.Split(new string[] { " " }, 4, StringSplitOptions.None);
-
-            try
-            {
-                cd.Sender = msg[0];
-                cd.Command = msg[1];
-                cd.Target = msg[2];
-                cd.Message = ReadOnlyMessage(msg[3]);
-            }
-            catch
-            {
-                return cd;
-            }
-            return cd;
+            return Sender.Split(new char[] { ':', '!' }, 2, StringSplitOptions.RemoveEmptyEntries)[0];
         }
         /// <summary>
         /// Removes ":" from wanted message.
@@ -122,42 +58,42 @@ namespace airclib
         /// <returns>String.</returns>
         public string ReadOnlyMessage(string Message)
         {
-            try
-            {
-                string cData = Message.Replace(":", "");
-                return cData;
-            }
-            catch
-            {
-                return Message;
-            }
+            return Message.Substring(Message.IndexOf(":") + 1);
+        }
+        /// <summary>
+        /// Reads data with server type.
+        /// </summary>
+        /// <param name="Message">Actual data.</param>
+        /// <returns>Returns server data structure.</returns>
+        public ServerData ReadServerData(string Message)
+        {
+            ServerData serverData = new ServerData();
+
+            string[] message = Message.Split(new char[] { ' ' }, 4, StringSplitOptions.None);
+
+            serverData.Sender = message[0];
+            serverData.Command = message[1];
+            serverData.Target = message[2];
+            serverData.Message = ReadOnlyMessage(message[3]);
+
+            return serverData;
         }
         /// <summary>
         /// Reads action, with normal formular, action sender and action it self. Data should be action type.
         /// </summary>
         /// <param name="Data">Data, reccomended action type.</param>
         /// <returns>ActionData structure.</returns>
-        public ActionData GetAction(string Data)
+        public ActionData ParseAction(string Data)
         {
-            ActionData ad = new ActionData();
+            ActionData actionData = new ActionData();
 
-            if (GetDataType(Data) != DataType.MSGTYPE_ACTION)
-                return ad;
+            string[] splitData = Data.Split(new string[] { " " }, 4, StringSplitOptions.None);
 
-            try
-            {
-                string[] dt = Data.Split(new string[] { " " }, 4, StringSplitOptions.None);
-                string newData = dt[3].Replace(":ACTION ", "");
-                newData = newData.Replace("", "");
-                ad.Sender = ReadNick(dt[0]);
-                ad.Target = dt[2];
-                ad.Action = newData;
-                return ad;
-            }
-            catch
-            {
-                return ad;
-            }
+            actionData.Sender = ReadNick(splitData[0]);
+            actionData.Target = splitData[2];
+            actionData.Action = splitData[3].Replace(":ACTION ", "");
+
+            return actionData;
         }
         /// <summary>
         /// Reads irc data, returning its data type.
@@ -166,16 +102,15 @@ namespace airclib
         /// <returns></returns>
         public DataType GetDataType(string Data)
         {
-            if (m_client.Connected())
-                return DataType.NULL;
-
             if (Data.Contains("PRIVMSG") || Data.Contains("NOTICE"))
-                if (ReadPrivmsg(Data).Command != "NOTICE" && Data.Split(' ')[2].StartsWith("#") && m_client.ChannelCount != 0) // must be a channel type
+            {
+                if (ReadPrivmsg(Data).Command != "NOTICE" && Data.Split(' ')[2].StartsWith("#")) // must be a channel type
                     return DataType.MSGTYPE_CHANNEL;
                 else if (Data.Contains("ACTION "))
                     return DataType.MSGTYPE_ACTION;
                 else
                     return DataType.MSGTYPE_USER;
+            }
             else
                 return DataType.MSGTYPE_SERVER;
         }

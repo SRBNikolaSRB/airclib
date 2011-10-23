@@ -9,16 +9,16 @@ using System.Resources;
 [assembly: AssemblyTitle("airclib")]
 [assembly: AssemblyDescription("Advanced Internet Relay Chat Library")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("airclib Team")]
+[assembly: AssemblyCompany("SRBNikolaSRB")]
 [assembly: AssemblyProduct("airclib")]
-[assembly: AssemblyCopyright("Copyright © airclib Team 2009")]
+[assembly: AssemblyCopyright("Copyright © airclib Team 2011")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
 // Setting ComVisible to false makes the types in this assembly not visible 
 // to COM components.  If you need to access a type in this assembly from 
 // COM, set the ComVisible attribute to true on that type.
-[assembly: ComVisible(false)]
+[assembly: ComVisible(true)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 [assembly: Guid("1362f3fa-3158-418c-b1fc-3a0fa0f6df7c")]
@@ -33,6 +33,6 @@ using System.Resources;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("0.3.0")]
-[assembly: AssemblyFileVersion("0.3.0")]
+[assembly: AssemblyVersion("1.0.0")]
+[assembly: AssemblyFileVersion("1.0.0")]
 [assembly: NeutralResourcesLanguageAttribute("en")]
