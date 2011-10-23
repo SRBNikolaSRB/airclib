@@ -4,7 +4,6 @@
  * Website "http://code.google.com/p/airclib/" 
  */
 
-#region Using...
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -13,7 +12,8 @@ using System.Net;
 using System.IO;
 using System.Threading;
 using airclib.Constants;
-#endregion
+using airclib.StringReader;
+using airclib.Base;
 
 namespace airclib
 {
@@ -28,13 +28,12 @@ namespace airclib
         private TcpClient m_connection = new TcpClient();
         private NetworkStream m_stream;
         private Thread m_listenThread;
-        private TextEffects m_effects = new TextEffects();
-        private IrcSReader m_stringReader;
+        private IrcSReader m_stringReader = new IrcSReader();
 
         private bool m_isConnected = false;
         private int m_channelCount = 0;
-        private string m_nick = "";
-        private string m_server = "";
+        private string m_nick;
+        private string m_server;
         private int m_port = 0;
 
         //Events
@@ -64,8 +63,6 @@ namespace airclib
         {
             m_server = Server;
             m_port = Port;
-
-            m_stringReader = new IrcSReader(this);
         }
 
         /// <summary>
@@ -86,7 +83,7 @@ namespace airclib
         /// </summary>
         public int ServerPort
         {
-            get {  return m_port; }
+            get { return m_port; }
             set { m_port = value; }
         }
 
@@ -102,17 +99,16 @@ namespace airclib
         /// <summary>
         /// Gets current connections server count based on how much channels client is in.
         /// </summary>
-        public int ChannelCount { get { return m_channelCount; } }
+        public int ChannelCount 
+        { get { return m_channelCount; }
+        }
 
         /// <summary>
-        /// Gives access to channel only commands.
+        /// Gets singe Irc channel.
         /// </summary>
-        /// <param name="Channel">Channel we want to edit.</param>
-        /// <returns>Channel with Channel only functions.</returns>
-        public IrcChannel GetChannel(string Channel) { return new IrcChannel( m_channelCount, Channel, this ); }
-
-        public TextEffects Effects { get { return m_effects; } }
-        public IrcSReader GetReader() { return m_stringReader; }
+        /// <param name="Channel">Chanel name.</param>
+        /// <returns>Irc channel.</returns>
+        public IrcChannel GetChannel(string Channel) { return new IrcChannel(Channel, this ); }
 
         #endregion
 
@@ -131,9 +127,9 @@ namespace airclib
                 if (OnConnect != null)
                     OnConnect();
             }
-            catch
+            catch (Exception Exc)
             {
-                return;
+                throw Exc;
             }
         }
         /// <summary>
@@ -162,18 +158,7 @@ namespace airclib
         /// <param name="Server">Server structure.</param>
         public void Connect(IrcServer Server)
         {
-            try
-            {
-                m_connection.Connect(Server.Server, Server.Port);
-                m_stream = m_connection.GetStream();
-                m_isConnected = true;
-                if (OnConnect != null)
-                    OnConnect();
-            }
-            catch
-            {
-                return;
-            }
+            Connect(Server.Server, Server.Port);
         }
         /// <summary>
         /// Sends data to connected server, must be connected to some server.
@@ -183,15 +168,18 @@ namespace airclib
         {
             try
             {
-                StreamWriter Writer = new StreamWriter(m_stream);
-                Writer.WriteLine(Data, m_stream);
-                Writer.Flush();
-                if (OnDataSent != null)
-                    OnDataSent(Data);
+                using (StreamWriter writer = new StreamWriter(m_stream))
+                {
+                    writer.WriteLine(Data, m_stream);
+                    writer.Flush();
+
+                    if (OnDataSent != null)
+                        OnDataSent(Data);
+                }
             }
-            catch
+            catch (Exception Exc)
             {
-                return;
+                throw Exc;
             }
         }
         /// <summary>
@@ -200,9 +188,6 @@ namespace airclib
         /// <param name="bListen">If set true, it will start listening.</param>
         public void Listen(bool bListen)
         {
-            if (!m_isConnected || m_stream == null)
-                return;
-
             if (!bListen && m_listenThread.IsAlive)
                 m_listenThread.Abort();
 
@@ -211,8 +196,10 @@ namespace airclib
                 m_listenThread = new Thread(KeepListen);
                 m_listenThread.Start();
             }
-            catch
-            { }
+            catch (Exception Exc)
+            {
+                throw Exc;
+            }
         }
 
         /// <summary>
@@ -221,6 +208,7 @@ namespace airclib
         public void Disconnect()
         {
             m_connection.Close();
+            Listen(false);
             m_isConnected = false;
             m_channelCount = 0;
         }
@@ -231,7 +219,7 @@ namespace airclib
         /// Bool, returns isConnected.
         /// </summary>
         /// <returns></returns>
-        public bool Connected()
+        public bool IsConnected()
         {
             if (m_isConnected == true)
                 return true;
@@ -501,42 +489,40 @@ namespace airclib
         }
         #endregion
 
-        #region Private Functions
-
         /// <summary>
         /// Main listener, threaded.
         /// </summary>
         private void KeepListen()
         {
-            StreamReader Reader = new StreamReader(m_connection.GetStream());
-            string Data = "";
-            while ((Data = Reader.ReadLine()) != "")
+            using (StreamReader Reader = new StreamReader(m_connection.GetStream()))
             {
-                if (Data.Contains("PING"))
+                string Data = "";
+                while ((Data = Reader.ReadLine()) != "")
                 {
-                    SendData(Data.Replace("PING", "PONG"));
-                }
-                else if (Data.Contains(" JOIN #")) // hooks OnUserJoinedChannel(string UserNick, string Channel)
-                {
-                    string[] dt = Data.Split(' ');
+                    if (Data.Contains("PING"))
+                    {
+                        SendData(Data.Replace("PING", "PONG"));
+                    }
+                    else if (Data.Contains(" JOIN #")) // hooks OnUserJoinedChannel(string UserNick, string Channel)
+                    {
+                        string [] splitData = Data.Split(' ');
 
-                    if (OnUserJoinedChannel != null && m_stringReader.ReadNick(dt[0]) != GetNick())
-                        OnUserJoinedChannel(m_stringReader.ReadNick(dt[0]), dt[2]);
-                }
-                else if (Data.Contains(" PART #")) // hooks OnUserLeftChannel(string UserNick, string Channel)
-                {
-                    string[] dt = Data.Split(' ');
-                    if (OnUserLeftChannel != null && m_stringReader.ReadNick(dt[0]) != GetNick())
-                        OnUserLeftChannel(m_stringReader.ReadNick(dt[0]), dt[2]);
-                }
+                        if (OnUserJoinedChannel != null && m_stringReader.ReadNick(splitData[0]) != GetNick())
+                            OnUserJoinedChannel(m_stringReader.ReadNick(splitData[0]), splitData[2]);
+                    }
+                    else if (Data.Contains(" PART #")) // hooks OnUserLeftChannel(string UserNick, string Channel)
+                    {
+                        string [] splitData = Data.Split(' ');
+                        if (OnUserLeftChannel != null && m_stringReader.ReadNick(splitData[0]) != GetNick())
+                            OnUserLeftChannel(m_stringReader.ReadNick(splitData[0]), splitData[2]);
+                    }
 
-                if (OnReciveData != null && Data != null)
-                    OnReciveData(Data);
+                    if (OnReciveData != null && Data != null)
+                        OnReciveData(Data);
 
+                }
             }
         }
-
-        #endregion
     }
 }
 
