@@ -47,12 +47,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Code\IrcChannel.cs" />
-    <Compile Include="Code\Effects.cs" />
-    <Compile Include="Code\IrcClient.cs" />
-    <Compile Include="Code\Constants.cs" />
-    <Compile Include="Code\IrcSReader.cs" />
+    <Compile Include="Base\Channel.cs" />
+    <Compile Include="Constants\ActionData.cs" />
+    <Compile Include="Constants\ColorMessages.cs" />
+    <Compile Include="Constants\DataType.cs" />
+    <Compile Include="Constants\Effects.cs" />
+    <Compile Include="Constants\IrcServer.cs" />
+    <Compile Include="Constants\PrivmsgData.cs" />
+    <Compile Include="Constants\ServerData.cs" />
+    <Compile Include="IrcClient.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="StringReader\IrcSReader.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
