@@ -1,5 +1,5 @@
 Advanced IRC Library Project
-Copyright (C) 2009 Azolex <www.azolex.com><http://code.google.com/p/airclib/>
+Copyright (C) 2011 Nikola Miljkovic <http://code.google.com/p/airclib/>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

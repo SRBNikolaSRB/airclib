@@ -1,0 +1,59 @@
+/* Effects.cs
+ * 
+ * Advanced IRC Library Project
+ * Copyright (C) 2011 Nikola Miljkovic <http://code.google.com/p/airclib/>
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+namespace airclib.Constants
+{
+    public class TextEffects
+    {
+        //Constants 
+        public const string BoldFont = "\u0002";
+        public const string ColoredFont = "\u0003";
+        public const string UnderlineFont = "\u001F";
+        public const string FontEnd = "\u000E";
+
+        /// <summary>
+        /// Changes color of wanted text.
+        /// </summary>
+        /// <param name="text">Wanted text.</param>
+        /// <param name="color">Wanted color.</param>
+        /// <returns>Returns text with changed color.</returns>
+        public string ColorText(string text, ColorMessages color)
+        {
+            return (ColoredFont + (int)color + text + FontEnd);
+        }
+        /// <summary>
+        /// Makes wanted text bold.
+        /// </summary>
+        /// <param name="text">Wanted text.</param>
+        /// <returns>Text with bold effect.</returns>
+        public string BoldText(string text)
+        {
+            return (BoldFont + text + FontEnd);
+        }
+        /// <summary>
+        /// Underlines wanted text.
+        /// </summary>
+        /// <param name="text">Wanted text.</param>
+        /// <returns>Underlined text.</returns>
+        public string UnderlineText(string text)
+        {
+            return (UnderlineFont + text + FontEnd);
+        }
+    }
+}

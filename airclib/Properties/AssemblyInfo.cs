@@ -1,5 +1,4 @@
 ﻿using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Resources;
 
@@ -9,9 +8,9 @@ using System.Resources;
 [assembly: AssemblyTitle("airclib")]
 [assembly: AssemblyDescription("Advanced Internet Relay Chat Library")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("SRBNikolaSRB")]
+[assembly: AssemblyCompany("Nikola Miljkovic")]
 [assembly: AssemblyProduct("airclib")]
-[assembly: AssemblyCopyright("Copyright © airclib Team 2011")]
+[assembly: AssemblyCopyright("Copyright © Nikola Miljkovic 2011")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -33,6 +32,5 @@ using System.Resources;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.0.0")]
-[assembly: AssemblyFileVersion("1.0.0")]
+[assembly: AssemblyVersion("0.5.*")]
 [assembly: NeutralResourcesLanguageAttribute("en")]
