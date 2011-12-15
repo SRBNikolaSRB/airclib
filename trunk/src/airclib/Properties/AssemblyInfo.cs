@@ -7,11 +7,11 @@ using System.Resources;
 // associated with an assembly.
 [assembly: AssemblyTitle("airclib")]
 [assembly: AssemblyDescription("Advanced Internet Relay Chat Library")]
-[assembly: AssemblyConfiguration("")]
+[assembly: AssemblyConfiguration("retail")]
 [assembly: AssemblyCompany("Nikola Miljkovic")]
 [assembly: AssemblyProduct("airclib")]
 [assembly: AssemblyCopyright("Copyright © Nikola Miljkovic 2011")]
-[assembly: AssemblyTrademark("")]
+[assembly: AssemblyTrademark("Leaf")]
 [assembly: AssemblyCulture("")]
 
 // Setting ComVisible to false makes the types in this assembly not visible 
