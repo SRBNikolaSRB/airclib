@@ -49,7 +49,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Base\Channel.cs" />
-    <Compile Include="ConnectionChangeEventHandler.cs" />
     <Compile Include="Constants\ActionData.cs" />
     <Compile Include="Constants\ColorMessages.cs" />
     <Compile Include="Constants\DataType.cs" />
