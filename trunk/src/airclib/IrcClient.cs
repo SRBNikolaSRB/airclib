@@ -180,7 +180,26 @@ namespace airclib
                 _listenThread.Abort();
             }
 
-            _listenThread = new Thread(KeepListen);
+            _listenThread = new Thread(() => 
+                {
+                    while (NStream.DataAvailable)
+                    {
+                        var data = _reader.ReadLine();
+                        if (String.IsNullOrEmpty(data))
+                            continue;
+
+                        ReceiveData(data);
+                        if (OnReciveData != null)
+                        {
+                            var args = new IrcDataEventArgs
+                                {
+                                    Data = data,
+                                    Sender = IrcSReader.ReadSender(data)
+                                };
+                            OnReciveData(this, args);
+                        }
+                    }
+                });
             _listenThread.Start();
         }
 
@@ -260,84 +279,64 @@ namespace airclib
             get { return _stream; }
         }
 
-        /// <summary>
-        /// Main listener, threaded.
-        /// </summary>
-        private void KeepListen()
+        private void ReceiveData(string data)
         {
-            while (NStream.DataAvailable)
+            if (data.StartsWith("PING"))
             {
-                var data = _reader.ReadLine();
-                if (String.IsNullOrEmpty(data))
-                    continue;
-
-                if (OnReciveData != null)
-                {
-                    var args = new IrcDataEventArgs
+                SendData(data.Replace("PING", "PONG"));
+            }
+            else switch (IrcSReader.ReadCommand(data))
+            {
+                case "JOIN":
                     {
-                        Data = data,
-                        Sender = IrcSReader.ReadSender(data)
-                    };
-                    OnReciveData(this, args);
-                }
-
-                if (data.StartsWith("PING"))
-                {
-                    SendData(data.Replace("PING", "PONG"));
-                }
-                else switch (IrcSReader.ReadCommand(data))
-                {
-                    case "JOIN":
+                        var splitData = data.Split(' ');
+                        splitData[0] = IrcSReader.ReadNick(splitData[0]);
+                        if (OnUserJoinedChannel != null && splitData[0] != _nick)
                         {
-                            var splitData = data.Split(' ');
-                            splitData[0] = IrcSReader.ReadNick(splitData[0]);
-                            if (OnUserJoinedChannel != null && splitData[0] != _nick)
-                            {
-                                var args = new IrcChannelEventArgs
-                                               {
-                                                   Channel = splitData[2],
-                                                   Nick = splitData[0]
-                                               };
-                                OnUserJoinedChannel(this, args);
-                            }
-                            if (OnChannelJoin != null && splitData[0] == _nick)
-                            {
-                                ChannelCount++;
-                                var args = new IrcChannelEventArgs
-                                               {
-                                                   Channel = splitData[2],
-                                                   Nick = _nick
-                                               };
-                                OnChannelJoin(this, args);
-                            }
+                            var args = new IrcChannelEventArgs
+                                           {
+                                               Channel = splitData[2],
+                                               Nick = splitData[0]
+                                           };
+                            OnUserJoinedChannel(this, args);
                         }
-                        break;
-                    case "PART":
+                        if (OnChannelJoin != null && splitData[0] == _nick)
                         {
-                            var splitData = data.Split(' ');
-                            splitData[0] = IrcSReader.ReadNick(splitData[0]);
-                            if (OnChannelPart != null && splitData[0] == _nick)
-                            {
-                                ChannelCount--;
-                                var args = new IrcChannelEventArgs
-                                {
-                                    Channel = splitData[2],
-                                    Nick = _nick
-                                };
-                                OnChannelPart(this, args);
-                            }
-                            if (OnUserLeftChannel != null && splitData[0] != _nick)
-                            {
-                                var args = new IrcChannelEventArgs
-                                               {
-                                                   Channel = splitData[2],
-                                                   Nick = splitData[0]
-                                               };
-                                OnUserLeftChannel(this, args);
-                            }
+                            ChannelCount++;
+                            var args = new IrcChannelEventArgs
+                                           {
+                                               Channel = splitData[2],
+                                               Nick = _nick
+                                           };
+                            OnChannelJoin(this, args);
                         }
-                        break;
-                }
+                    }
+                    break;
+                case "PART":
+                    {
+                        var splitData = data.Split(' ');
+                        splitData[0] = IrcSReader.ReadNick(splitData[0]);
+                        if (OnChannelPart != null && splitData[0] == _nick)
+                        {
+                            ChannelCount--;
+                            var args = new IrcChannelEventArgs
+                                           {
+                                               Channel = splitData[2],
+                                               Nick = _nick
+                                           };
+                            OnChannelPart(this, args);
+                        }
+                        if (OnUserLeftChannel != null && splitData[0] != _nick)
+                        {
+                            var args = new IrcChannelEventArgs
+                                           {
+                                               Channel = splitData[2],
+                                               Nick = splitData[0]
+                                           };
+                            OnUserLeftChannel(this, args);
+                        }
+                    }
+                    break;
             }
         }
 
