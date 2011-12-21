@@ -25,94 +25,116 @@ namespace airclib.StringReader
     /// <summary>
     /// Handles and Analyses irc protocol.
     /// </summary>
-    public class IrcSReader
+    static class IrcSReader
     {
+        private const char WhiteSpace = ' ';
+
         /// <summary>
         /// Reads channel or user private message. Returns PrivmsgData.
         /// </summary>
         /// <param name="data">Data to get readed.</param>
         /// <returns>PrivmsgData.</returns>
-        public PrivmsgData ReadPrivmsg(string data)
+        public static PrivmsgData ReadPrivmsg(string data)
         {
             var msgData = new PrivmsgData();
 
-            if (!data.Contains("PRIVMSG") && !data.Contains("NOTICE"))
+            if (CheckType(ref data))
             {
                 msgData.Type = DataType.Default;
-                msgData.StringData = data;
+                msgData.RawData = data;
             }
             else
             {
-                var sData = data.Split(new char[] { ' ' }, 4, StringSplitOptions.None);
-
-                msgData.Sender = sData[0];
-                msgData.Command = sData[1];
-                msgData.Target = sData[2];
-                msgData.Message = sData[3];
-                msgData.StringData = data;
-
-                msgData.Type = msgData.Target.StartsWith("#") ? DataType.Channel : DataType.User;
+                ConstructData(ref msgData,data);
             }
 
             return msgData;
         }
+
+        /// <summary>
+        /// Constructs private message data with provided string.
+        /// </summary>
+        private static void ConstructData(ref PrivmsgData pmsg, string data)
+        {
+            var sData = SplitBy(ref data, 4, WhiteSpace); 
+            
+            pmsg.Sender = sData[0];
+            pmsg.Command = sData[1];
+            pmsg.Target = sData[2];
+            pmsg.Message = sData[3];
+            pmsg.RawData = data;
+
+            pmsg.Type = pmsg.Target.StartsWith("#") ? DataType.Channel : DataType.User;
+        }
+
         /// <summary>
         /// Parses sender data.
         /// </summary>
         /// <param name="data">Sender ID, i recommend using ReadPrivmsg's parsed sender.</param>
         /// <returns>Sender string.</returns>
-        public string ReadSender(string data)
+        public static string ReadSender(string data) 
         {
-            return data.Split(new char[] { ' ' }, 1)[0];
+            return ReadBy(ref data, 1, 0, WhiteSpace);
         }
         /// <summary>
         /// Parses nickname of sender.
         /// </summary>
         /// <param name="sender">Sender ID, i recommend using ReadPrivmsg's parsed sender.</param>
         /// <returns>Nickname.</returns>
-        public string ReadNick(string sender)
+        public static string ReadNick(string sender)
         {
-            return sender.Split(new char[] { ':', '!' }, 2, StringSplitOptions.RemoveEmptyEntries)[0];
+            return ReadBy(ref sender, 2, 0, ':', '!');
         }
+
         /// <summary>
         /// Parses nickname of sender from data.
         /// </summary>
         /// <param name="data">Data received from irc server.</param>
         /// <returns>Nickname.</returns>
-        public string ReadNickFromData(string data)
+        public static string ReadNickFromData(string data)
         {
             return ReadNick(ReadSender(data));
         }
+
         /// <summary>
         /// Removes ":" from wanted message.
         /// </summary>
         /// <param name="message">Wanted message.</param>
         /// <returns>String.</returns>
-        public string ReadOnlyMessage(string message)
+        public static string ReadOnlyMessage(string message)
         {
-            return message.Substring(message.IndexOf(":") + 1);
+            return message.Substring(message.IndexOf(':') + 1);
         }
 
-        public string ReadCommand(string data)
+        /// <summary>
+        /// Reads IRC command from given IRC data.
+        /// </summary>
+        /// <param name="data">Data to read from.</param>
+        /// <returns>Command string.</returns>
+        public static string ReadCommand(string data)
         {
-            var splitData = data.Split(new char[] { ' ' }, 3, StringSplitOptions.None);
-            return splitData[1];
+            return ReadBy(ref data, 3, 1, WhiteSpace);
         }
 
-        public string ReadMessage(string data)
+        /// <summary>
+        /// Reads raw message from given IRC data.
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        public static string ReadMessage(string data)
         {
-            var splitData = data.Split(new char[] { ' ' }, 4, StringSplitOptions.None);
-            return ReadOnlyMessage(splitData[3]);
+            return ReadOnlyMessage(ReadBy(ref data, 4, 3, WhiteSpace));
         }
+
         /// <summary>
         /// Reads data with server type.
         /// </summary>
         /// <param name="data">Actual data.</param>
         /// <returns>Returns server data structure.</returns>
-        public ServerData ReadServerData(string data)
+        public static ServerData ReadServerData(string data)
         {
             var serverData = new ServerData();
-            var splitData = data.Split(new char[] { ' ' }, 4, StringSplitOptions.None);
+            var splitData = SplitBy(ref data, 4, WhiteSpace);
 
             serverData.Sender = splitData[0];
             serverData.Command = splitData[1];
@@ -121,16 +143,16 @@ namespace airclib.StringReader
 
             return serverData;
         }
+
         /// <summary>
         /// Reads action, with normal formular, action sender and action it self. Data should be action type.
         /// </summary>
         /// <param name="data">Data, reccomended action type.</param>
         /// <returns>ActionData structure.</returns>
-        public ActionData ParseAction(string data)
+        public static ActionData ParseAction(string data)
         {
             var actionData = new ActionData();
-
-            var splitData = data.Split(new string[] { " " }, 4, StringSplitOptions.None);
+            var splitData = SplitBy(ref data, 4, WhiteSpace);
 
             actionData.Sender = ReadNick(splitData[0]);
             actionData.Target = splitData[2];
@@ -138,24 +160,56 @@ namespace airclib.StringReader
 
             return actionData;
         }
+
         /// <summary>
         /// Reads irc data, returning its data type.
         /// </summary>
         /// <param name="data"></param>
         /// <returns></returns>
-        public DataType GetDataType(string data)
+        public static DataType GetDataType(string data)
         {
-            if (!data.Contains("PRIVMSG") && !data.Contains("NOTICE"))
-                return DataType.Server;
+            var dtype = DataType.Default;
+            if (CheckType(ref data))
+            {
+                dtype = DataType.Server;
+            }
             else
             {
-                if (ReadPrivmsg(data).Command != "NOTICE" && data.Split(' ')[2].StartsWith("#")) // must be a channel type 
-                    return DataType.Channel;
+                if (ReadPrivmsg(data).Command != "NOTICE" && ReadBy(ref data, 4, 2, WhiteSpace).StartsWith("#")) // must be a channel type 
+                {
+                    dtype = DataType.Channel;
+                }
                 else if (data.Contains("ACTION "))
-                    return DataType.Action;
+                {
+                    dtype = DataType.Action;
+                }
                 else
-                    return DataType.User;
+                {
+                    dtype = DataType.User;
+                }
             }
+
+            return dtype;
+        }
+
+
+        private static string[] SplitBy(ref string data, int count, params char[] p)
+        {
+            return data.Split(p, count, StringSplitOptions.None);
+        }
+
+        private static string ReadBy(ref string data, int count, int place, params char[] p)
+        {
+            return data.Split(p, count, StringSplitOptions.RemoveEmptyEntries)[place];
+        }
+
+        /// <summary>
+        /// Cheks if data is private message or notice.
+        /// </summary>
+        private static bool CheckType(ref string data)
+        {
+            var command = ReadCommand(data);
+            return command != "PRIVMSG" || command != "NOTICE";
         }
     }
 }
