@@ -26,6 +26,6 @@ namespace airclib.Constants
         public string Target;
         public string Message;
         public DataType Type;
-        public string StringData;
+        public string RawData;
     }
 }
