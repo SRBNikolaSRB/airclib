@@ -1,0 +1,1 @@
+Advanced Internet Relay Chat Library(airc) is Dynamic-link library(DLL) for .NET platforms mostly, it easily handles IRC connection, also some advanced IRC functions. airclib is written in C#.
